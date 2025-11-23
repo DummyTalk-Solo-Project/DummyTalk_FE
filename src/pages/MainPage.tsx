@@ -7,17 +7,54 @@ import axios from 'axios';
 import type { AxiosResponse } from 'axios';
 import type { APIResponse } from '../types/api.tsx'; // 정의한 타입 불러오기
 
-// (Styled Components는 동일하므로 생략 - 파일은 .tsx에 같이 있어도 무방)
+// --- Styled Components (디자인 적용) ---
 const MainContainer = styled.div`
-  background-color: #333446;
-  min-height: 100vh;
+  background-color: #333446; /* 메인 색상 */
+  
+  /* 뷰포트 전체 높이를 채우도록 설정 */
+  min-height: 100vh; 
+  /* 뷰포트 전체 너비를 채우도록 설정 (기본값 100%이지만 명시) */
+  width: 100vw; 
+
+  /* 중앙 정렬 */
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  align-items: center; /* 수평 중앙 정렬 */
+  justify-content: center; /* 수직 중앙 정렬 */
   text-align: center;
 `;
-// ... (TriviaText, ButtonGroup, ActionButton styled components 생략)
+
+const TriviaText = styled.h1`
+  color: #EAEFEF; /* 밝은 텍스트 */
+  font-size: 2.5em;
+  margin-bottom: 50px;
+  max-width: 80%;
+`;
+
+const ButtonGroup = styled.div`
+  display: flex;
+  gap: 30px;
+`;
+
+const ActionButton = styled.button`
+  background-color: #7F8CAA; /* 서브 색상 1 */
+  color: #EAEFEF;
+  border: none;
+  border-radius: 10px;
+  padding: 15px 30px;
+  font-size: 1.2em;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.1s;
+
+  &:hover {
+    background-color: #B8CFCE; /* 서브 색상 2 (Hover) */
+    color: #333446; 
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+`;
 
 // --- MainPage 컴포넌트 ---
 // React.FC를 사용하여 컴포넌트 타입 명시

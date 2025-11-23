@@ -14,7 +14,8 @@ const Header: React.FC<HeaderProps> = ({ isLoggedIn }) => {
         color: '#EAEFEF', 
         padding: '20px 40px', 
         textAlign: 'right', 
-        backgroundColor: '#333446' 
+        backgroundColor: '#333446', 
+        width: '100%', // 명시적으로 100% 너비 확보
     }}>
       <nav>
         {isLoggedIn ? (
