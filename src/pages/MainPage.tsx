@@ -1,5 +1,5 @@
 // pages/MainPage.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import styled from 'styled-components';
@@ -57,27 +57,33 @@ const ActionButton = styled.button`
   }
 `;
 
+// NOTE: HeaderProps 인터페이스 정의는 Header.tsx 파일에 있어야 합니다. 
+// MainPage에서는 Header 컴포넌트와 그 Prop을 사용하기만 합니다. 
+
 // --- MainPage 컴포넌트 ---
-// React.FC를 사용하여 컴포넌트 타입 명시
 const MainPage: React.FC = () => {
-  const [trivia, setTrivia] = useState<string>("안녕하세요 처음 뵙네요!"); // useState에 <string> 타입 명시
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false); // useState에 <boolean> 타입 명시
+  const [trivia, setTrivia] = useState<string>("안녕하세요 처음 뵙네요!"); 
+  // 1. 상태 변수 이름을 'logged'로 변경하고, 초기값을 isLoggedIn() 함수로 설정
+  const [logged, setLogged] = useState<boolean>(isLoggedIn()); 
   const navigate = useNavigate();
 
-  // 잡지식 텍스트를 서버에서 가져오는 함수
+  // 2. 로그아웃 성공 시 호출될 콜백 함수 정의
+  const handleLogoutSuccess = useCallback(() => {
+      // 로그아웃 시 logged 상태를 false로 업데이트
+      setLogged(false);
+  }, []);
+
+  // 잡지식 텍스트를 서버에서 가져오는 함수 (변동 없음)
   const fetchTrivia = async () => {
     try {
-      // APIResponse의 제네릭 T 자리에 string을 명시
       const response: AxiosResponse<APIResponse<string>> = await axios.get("/api/dummies/get-dummy"); 
       
-      // 타입 체크를 통해 안전하게 데이터 접근
       if (response.data.success && response.data.result) {
-        setTrivia(response.data.result); // result는 string 타입으로 확정
+        setTrivia(response.data.result); 
       } else {
         setTrivia(response.data.message || "잡지식을 불러오는 데 실패했어요. 다시 시도해 주세요.");
       }
     } catch (error) {
-      // AxiosError 타입 확인을 위한 instanceof 사용 (선택 사항이나 권장)
       if (axios.isAxiosError(error)) {
         console.error("API 호출 에러:", error.message);
       } else {
@@ -87,10 +93,11 @@ const MainPage: React.FC = () => {
     }
   };
 
-  // ... useEffect, handleRefreshClick, handleQuizClick 로직은 동일
-
+  // 3. 컴포넌트 마운트 시 최초 로그인 상태 확인
   useEffect(() => {
-    // JWT 토큰 유무 확인 로직으로 setIsLoggedIn(true/false) 설정 필요
+    // 최초 마운트 시, isLoggedIn() 결과로 logged 상태를 다시 한 번 정확히 설정
+    setLogged(isLoggedIn());
+    // (선택 사항) 로그인 여부에 관계없이 잡지식 로딩이 필요하다면 여기서 fetchTrivia() 호출
   }, []);
 
   const handleRefreshClick = () => {
@@ -103,7 +110,8 @@ const MainPage: React.FC = () => {
 
   return (
     <>
-      <Header isLoggedIn={isLoggedIn} /> 
+      {/* 4. Header에 logged 상태와 로그아웃 핸들러를 전달 */}
+      <Header isLoggedIn={logged} onLogout={handleLogoutSuccess} /> 
       <MainContainer>
         <TriviaText>{trivia}</TriviaText>
         <ButtonGroup>
