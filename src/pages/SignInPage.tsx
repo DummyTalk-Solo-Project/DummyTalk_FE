@@ -1,19 +1,28 @@
 // pages/SignInPage.tsx
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link  } from 'react-router-dom';
 import styled from 'styled-components';
 import axios from 'axios';
 import type { APIResponse, SignInRequestDTO, VerificationRequestDTO } from '../types/api.tsx';
 
 // (Styled Components는 LoginPage.tsx의 AuthContainer, Card, Input, AuthButton, ErrorMessage 재활용)
 const AuthContainer = styled.div`
-  /* ... MainContainer와 유사한 배경/중앙 정렬 스타일 ... */
-  background-color: #333446;
-  min-height: 100vh;
+  background-color: #333446; /* 메인 색상 */
+  
+  /* 뷰포트 전체 높이를 채우도록 설정 */
+  min-height: 100vh; 
+  /* 뷰포트 전체 너비를 채우도록 설정 */
+  width: 100vw; 
+
+  /* 중앙 정렬 */
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  align-items: center; /* 수평 중앙 정렬 */
+  justify-content: center; /* 수직 중앙 정렬 */
+  text-align: center;
+
+  /* Header가 없으므로 상단에 약간의 패딩 추가 (선택 사항) */
+  padding-top: 50px; 
 `;
 
 const Card = styled.div`
@@ -180,6 +189,9 @@ const SignInPage: React.FC = () => {
         {isEmailVerified && (
           <AuthButton type="submit">회원가입 하기</AuthButton>
         )}
+        <Link to="/" style={{ textAlign: 'center', fontSize: '0.9em', color: '#333446', marginTop: '10px' }}>
+          메인 페이지로 돌아가기
+        </Link>
 
       </Card>
     </AuthContainer>

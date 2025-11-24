@@ -8,13 +8,22 @@ import type { APIResponse } from '../types/api';
 
 // --- Styled Components (디자인은 MainPage 참고) ---
 const AuthContainer = styled.div`
-  /* ... MainContainer와 유사한 배경/중앙 정렬 스타일 ... */
-  background-color: #333446;
-  min-height: 100vh;
+  background-color: #333446; /* 메인 색상 */
+  
+  /* 뷰포트 전체 높이를 채우도록 설정 */
+  min-height: 100vh; 
+  /* 뷰포트 전체 너비를 채우도록 설정 */
+  width: 100vw; 
+
+  /* 중앙 정렬 */
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  align-items: center; /* 수평 중앙 정렬 */
+  justify-content: center; /* 수직 중앙 정렬 */
+  text-align: center;
+
+  /* Header가 없으므로 상단에 약간의 패딩 추가 (선택 사항) */
+  padding-top: 50px; 
 `;
 
 const Card = styled.div`
