@@ -6,6 +6,7 @@ import styled from 'styled-components';
 import axios from 'axios';
 import type { AxiosResponse } from 'axios';
 import type { APIResponse } from '../types/api.tsx'; // 정의한 타입 불러오기
+import { removeAccessToken, isLoggedIn } from '../utils/auth';
 
 // --- Styled Components (디자인 적용) ---
 const MainContainer = styled.div`

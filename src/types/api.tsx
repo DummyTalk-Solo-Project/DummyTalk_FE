@@ -18,3 +18,30 @@ export interface GetQuizInfoResponseDTO {
   title: string;
   answerList: string[]; // List<String> (Java) -> string[] (TS)
 }
+
+// types/api.ts (추가)
+// LoginRequestDTO 타입
+export interface LoginRequestDTO {
+  email: string;
+  password: string;
+}
+
+// LoginSuccessDTO 타입 (백엔드가 응답 본문에 username을 주지만, Header에만 JWT를 주므로 필요 없을 수도 있음)
+export interface LoginSuccessDTO {
+  username: string; // 사용자 이름
+  accessToken: string;
+}
+
+// types/api.ts (추가)
+// VerificationRequestDTO 타입
+export interface VerificationRequestDTO {
+    email: string;
+    code: string;
+}
+
+// SignInRequestDTO 타입
+export interface SignInRequestDTO {
+    username: string;
+    email: string;
+    password: string;
+}
