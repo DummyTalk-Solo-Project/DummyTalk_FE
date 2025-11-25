@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import styled from 'styled-components';
-import axios from 'axios';
+import api from '../api/axiosInstance';
 import { setAccessToken } from '../utils/auth';
 import type { APIResponse } from '../types/api';
 
@@ -73,7 +73,7 @@ const LoginPage: React.FC = () => {
 
     try {
       // 🚨 주의: 백엔드는 JWT를 응답 Header (Authorization)에 담아줍니다.
-      const response = await axios.post<APIResponse<boolean>>("/api/users/login", { email, password });
+      const response = await api.post<APIResponse<boolean>>("/api/users/login", { email, password });
 
       // JWT가 Header에 있다면, 여기서 추출해야 합니다.
       const jwtToken = response.headers['authorization']; // 소문자로 접근해야 함 (브라우저가 자동 소문자화)

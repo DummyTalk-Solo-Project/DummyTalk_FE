@@ -3,10 +3,12 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import styled from 'styled-components';
-import axios from 'axios';
+// import axios from 'axios';
+import api from '../api/axiosInstance';
 import type { AxiosResponse } from 'axios';
+import  {  isAxiosError } from 'axios';
 import type { APIResponse } from '../types/api.tsx'; // 정의한 타입 불러오기
-import { removeAccessToken, isLoggedIn } from '../utils/auth';
+import { isLoggedIn } from '../utils/auth';
 
 // --- Styled Components (디자인 적용) ---
 const MainContainer = styled.div`
@@ -76,20 +78,24 @@ const MainPage: React.FC = () => {
   // 잡지식 텍스트를 서버에서 가져오는 함수 (변동 없음)
   const fetchTrivia = async () => {
     try {
-      const response: AxiosResponse<APIResponse<string>> = await axios.get("/api/dummies/get-dummy"); 
+      const response: AxiosResponse<APIResponse<string>> = await api.get("/api/dummies/get-dummy"); 
       
       if (response.data.success && response.data.result) {
         setTrivia(response.data.result); 
       } else {
         setTrivia(response.data.message || "잡지식을 불러오는 데 실패했어요. 다시 시도해 주세요.");
       }
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        console.error("API 호출 에러:", error.message);
-      } else {
-        console.error("알 수 없는 에러:", error);
-      }
-      setTrivia("서버와 통신할 수 없습니다. 백엔드 상태를 확인해 주세요.");
+    } catch (error) {// ⭐️ 수정: isAxiosError 함수를 사용하여 에러 타입 확인
+      if (isAxiosError(error)) { 
+        // API 호출 에러 (HTTP 에러, 네트워크 에러 등)
+        const errorMessage = error.response?.data?.message || error.message;
+        console.error("API 호출 에러:", errorMessage);
+        setTrivia(`데이터 로딩 실패: ${errorMessage}`);
+      } else {
+        // 알 수 없는 자바스크립트 에러
+        console.error("알 수 없는 에러:", error);
+        setTrivia("서버와 통신할 수 없습니다. 백엔드 상태를 확인해 주세요.");
+      }
     }
   };
 
