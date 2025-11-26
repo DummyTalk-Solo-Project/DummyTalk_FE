@@ -14,10 +14,11 @@ import { isLoggedIn } from '../utils/auth';
 const MainContainer = styled.div`
   background-color: #333446; /* 메인 색상 */
   
-  /* 뷰포트 전체 높이를 채우도록 설정 */
-  min-height: 100vh; 
-  /* 뷰포트 전체 너비를 채우도록 설정 (기본값 100%이지만 명시) */
-  width: 100vw; 
+  min-height: 100vh; /* 뷰포트 높이 전체 */
+  width: 100vw; /* 뷰포트 너비 전체 */
+
+  padding-top: 70px;
+
 
   /* 중앙 정렬 */
   display: flex;

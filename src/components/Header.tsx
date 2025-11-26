@@ -38,10 +38,17 @@ const Header: React.FC<HeaderProps> = ({ isLoggedIn, onLogout }) => {
   return (
     <header style={{ 
         color: '#EAEFEF', 
-        padding: '20px 40px', 
+        padding: '20px 40px', // 세로 20px 패딩
         textAlign: 'right', 
         backgroundColor: '#333446', 
-        width: '100%', 
+        width: '95%', 
+        
+        // ⭐️⭐️⭐️ 수정 1: 상단에 고정 및 Z-Index 부여 ⭐️⭐️⭐️
+        position: 'fixed', // 화면 스크롤과 무관하게 고정
+        top: 0,
+        left: 0,
+        zIndex: 100, // MainContainer 위에 있도록
+        height: '70px', // 명시적인 높이 지정 (20px*2 패딩 + 폰트 높이)
     }}>
       <nav>
         {isLoggedIn ? (
