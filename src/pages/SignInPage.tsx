@@ -142,10 +142,7 @@ const SignInPage: React.FC = () => {
       <Card as="form" onSubmit={handleSignIn}>
         <h2>회원가입</h2>
         
-        <Input type="text" placeholder="사용자 닉네임" value={username} onChange={(e) => setUsername(e.target.value)} required />
-        <Input type="password" placeholder="패스워드" value={password} onChange={(e) => setPassword(e.target.value)} required />
         
-        {/* 이메일 입력 및 인증 요청 */}
         <div style={{ display: 'flex', gap: '10px' }}>
           <Input 
             type="email" 
@@ -159,6 +156,11 @@ const SignInPage: React.FC = () => {
             이메일 인증
           </AuthButton>
         </div>
+        <Input type="password" placeholder="패스워드" value={password} onChange={(e) => setPassword(e.target.value)} required />
+        <Input type="text" placeholder="사용자 닉네임" value={username} onChange={(e) => setUsername(e.target.value)} required />
+        
+        {/* 이메일 입력 및 인증 요청 */}
+        
 
         {/* 인증 코드 입력 (동적으로 띄움) */}
         {isEmailSent && !isEmailVerified && (

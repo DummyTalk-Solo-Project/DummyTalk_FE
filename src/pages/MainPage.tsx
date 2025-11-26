@@ -3,10 +3,10 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import styled from 'styled-components';
-// import axios from 'axios';
+import TypingText from '../components/TypingText.tsx';
 import api from '../api/axiosInstance';
 import type { AxiosResponse } from 'axios';
-import  {  isAxiosError } from 'axios';
+import { isAxiosError } from 'axios';
 import type { APIResponse } from '../types/api.tsx'; // 정의한 타입 불러오기
 import { isLoggedIn } from '../utils/auth';
 
@@ -64,38 +64,38 @@ const ActionButton = styled.button`
 
 // --- MainPage 컴포넌트 ---
 const MainPage: React.FC = () => {
-  const [trivia, setTrivia] = useState<string>("안녕하세요 처음 뵙네요!"); 
+  const [trivia, setTrivia] = useState<string>("안녕하세요 처음 뵙네요!");
   // 1. 상태 변수 이름을 'logged'로 변경하고, 초기값을 isLoggedIn() 함수로 설정
-  const [logged, setLogged] = useState<boolean>(isLoggedIn()); 
+  const [logged, setLogged] = useState<boolean>(isLoggedIn());
   const navigate = useNavigate();
 
   // 2. 로그아웃 성공 시 호출될 콜백 함수 정의
   const handleLogoutSuccess = useCallback(() => {
-      // 로그아웃 시 logged 상태를 false로 업데이트
-      setLogged(false);
+    // 로그아웃 시 logged 상태를 false로 업데이트
+    setLogged(false);
   }, []);
 
   // 잡지식 텍스트를 서버에서 가져오는 함수 (변동 없음)
   const fetchTrivia = async () => {
     try {
-      const response: AxiosResponse<APIResponse<string>> = await api.get("/api/dummies/get-dummy"); 
-      
+      const response: AxiosResponse<APIResponse<string>> = await api.get("/api/dummies/get-dummy");
+
       if (response.data.success && response.data.result) {
-        setTrivia(response.data.result); 
+        setTrivia(response.data.result);
       } else {
         setTrivia(response.data.message || "잡지식을 불러오는 데 실패했어요. 다시 시도해 주세요.");
       }
-    } catch (error) {// ⭐️ 수정: isAxiosError 함수를 사용하여 에러 타입 확인
-      if (isAxiosError(error)) { 
-        // API 호출 에러 (HTTP 에러, 네트워크 에러 등)
+    } catch (error) {
+      if (isAxiosError(error)) {
+
         const errorMessage = error.response?.data?.message || error.message;
-        console.error("API 호출 에러:", errorMessage);
+        console.error("API 호출 에러:", errorMessage);
         setTrivia(`데이터 로딩 실패: ${errorMessage}`);
-      } else {
-        // 알 수 없는 자바스크립트 에러
-        console.error("알 수 없는 에러:", error);
-        setTrivia("서버와 통신할 수 없습니다. 백엔드 상태를 확인해 주세요.");
-      }
+      } else {
+        // 알 수 없는 자바스크립트 에러
+        console.error("알 수 없는 에러:", error);
+        setTrivia("서버와 통신할 수 없습니다. 백엔드 상태를 확인해 주세요.");
+      }
     }
   };
 
@@ -117,9 +117,12 @@ const MainPage: React.FC = () => {
   return (
     <>
       {/* 4. Header에 logged 상태와 로그아웃 핸들러를 전달 */}
-      <Header isLoggedIn={logged} onLogout={handleLogoutSuccess} /> 
+      <Header isLoggedIn={logged} onLogout={handleLogoutSuccess} />
       <MainContainer>
-        <TriviaText>{trivia}</TriviaText>
+        {/* <TriviaText>{trivia}</TriviaText> */}
+        <div className="trivia-display-area">
+          <TypingText text={trivia} speed={40} />
+        </div>
         <ButtonGroup>
           <ActionButton onClick={handleRefreshClick}>
             ✨ 잡지식 새로고침
