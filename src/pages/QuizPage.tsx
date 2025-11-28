@@ -113,6 +113,7 @@ const QuizPage: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [selectedAnswerIndex, setSelectedAnswerIndex] = useState<number | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const navigate = useNavigate(); // ⭐️ useNavigate 훅 초기화
 
     // GET /api/dummies/quiz 요청 함수
     const fetchQuizInfo = useCallback(async () => {
@@ -121,6 +122,14 @@ const QuizPage: React.FC = () => {
         try {
             // API 호출
             const response: AxiosResponse<APIResponse<QuizData>> = await api.get("/api/dummies/quiz");
+
+            const testData = response.data.result;
+
+            if (testData) {
+                // 현재 상태가 무엇이든 강제로 'OPEN'으로 덮어씁니다.
+                testData.status = 'OPEN';
+            }
+
             setQuizData(response.data.result);
         } catch (error) {
             if (isAxiosError(error)) {
@@ -134,38 +143,51 @@ const QuizPage: React.FC = () => {
         }
     }, []);
 
-    // POST /api/dummies/quiz 요청 함수
-    const handleSubmitAnswer = useCallback(async () => {
-        // quizId와 선택된 답이 없으면 리턴
-        if (quizData?.quizId === undefined || selectedAnswerIndex === null) return;
-        
-        setIsSubmitting(true);
+    const handleAnswerSelect = useCallback((index: number) => {
+        setSelectedAnswerIndex(index);
+    }, []);
+
+
+    // ⭐️ 2. 퀴즈 풀이 요청 및 결과 처리 함수
+    const solveQuiz = useCallback(async () => {
+        if (selectedAnswerIndex === null || !quizData?.quizId) {
+            alert("정답을 선택해 주세요.");
+            return;
+        }
+
         try {
-            // 정답 제출 요청 (answer는 0부터 시작하는 index로 전달)
-            await api.post("/api/dummies/quiz", null, {
-                params: {
-                    id: quizData.quizId,
-                    answer: selectedAnswerIndex,
+            // ⭐️ 1번 수정 사항: 인덱스에 1을 더해 1~4번으로 변환하여 전송
+            const answerNumber = selectedAnswerIndex + 1;
+
+            const response: AxiosResponse<APIResponse<Object>> = await api.post(
+                "/api/dummies/quiz",
+                null, // Request Body는 비워두거나 null로 설정
+                {
+                    params: {
+                        id: quizData.quizId, // quizId는 quizData에서 가져옵니다.
+                        answer: answerNumber // 1부터 시작하는 정답 번호
+                    }
                 }
-            });
-            
-            alert("정답을 제출했습니다! 결과가 반영되었습니다.");
-            
-            // 퀴즈 제출 후, 퀴즈 상태를 갱신하기 위해 정보를 다시 불러옵니다 (CLOSE 상태로 전환 기대)
-            fetchQuizInfo(); 
+            );
+
+            const resultMessage = response.data.message || "퀴즈 결과가 정상적으로 처리되었습니다.";
+
+            // ⭐️ 2번 수정 사항: alert 확인 시 바로 홈으로 리다이렉트
+            alert(resultMessage);
+            navigate("/"); // ⭐️ 홈 페이지로 이동
 
         } catch (error) {
+            let errorMessage = "정답 제출 중 오류가 발생했습니다.";
             if (isAxiosError(error)) {
-                const errorMessage = error.response?.data?.message || "정답 제출에 실패했습니다.";
-                alert(`오류: ${errorMessage}`);
-            } else {
-                alert("알 수 없는 오류가 발생했습니다.");
+                errorMessage = error.response?.data?.message || errorMessage;
             }
+            alert(errorMessage);
+            // 에러 발생 시에도 혹시 모를 상황을 대비해 홈으로 보낼 수 있습니다.
+            // navigate("/"); 
         } finally {
             setIsSubmitting(false);
-            setSelectedAnswerIndex(null); 
         }
-    }, [quizData, selectedAnswerIndex, fetchQuizInfo]);
+    }, [selectedAnswerIndex, navigate, quizData]); // quizData를 의존성 배열에 추가
 
     useEffect(() => {
         fetchQuizInfo();
@@ -180,11 +202,11 @@ const QuizPage: React.FC = () => {
             return <InfoText style={{ color: '#ff5555' }}>오류: {error}</InfoText>;
         }
         if (!quizData) {
-             return <InfoText>퀴즈 정보가 없습니다. 관리자에게 문의하세요.</InfoText>;
+            return <InfoText>퀴즈 정보가 없습니다. 관리자에게 문의하세요.</InfoText>;
         }
 
         const { status, userGrade, title, answerList } = quizData;
-        
+
         // 1. NOT_OPEN 상태
         if (status === 'NOT_OPEN') {
             return (
@@ -195,7 +217,7 @@ const QuizPage: React.FC = () => {
                 </>
             );
         }
-        
+
         // 2. CLOSE 상태
         if (status === 'CLOSE') {
             return (
@@ -206,7 +228,7 @@ const QuizPage: React.FC = () => {
                 </>
             );
         }
-        
+
         // 3. OPEN 상태 (퀴즈 풀기)
         if (status === 'OPEN') {
             return (
@@ -225,10 +247,7 @@ const QuizPage: React.FC = () => {
                             </AnswerButton>
                         ))}
                     </AnswerListContainer>
-                    <SubmitButton 
-                        onClick={handleSubmitAnswer} 
-                        disabled={selectedAnswerIndex === null || isSubmitting}
-                    >
+                    <SubmitButton onClick={solveQuiz} disabled={selectedAnswerIndex === null || isSubmitting}>
                         {isSubmitting ? "제출 중..." : "정답 제출"}
                     </SubmitButton>
                 </>

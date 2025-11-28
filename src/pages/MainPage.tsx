@@ -9,6 +9,9 @@ import type { AxiosResponse } from 'axios';
 import { isAxiosError } from 'axios';
 import type { APIResponse } from '../types/api.tsx'; // 정의한 타입 불러오기
 import { isLoggedIn } from '../utils/auth';
+import ReactDOM from 'react-dom/client';
+import { removeAccessToken } from '../utils/auth.ts'; // 토큰 삭제 함수
+import App from '../App.tsx';
 
 // --- Styled Components (디자인 적용) ---
 const MainContainer = styled.div`
