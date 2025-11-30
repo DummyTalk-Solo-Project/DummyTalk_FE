@@ -209,7 +209,7 @@ const QuizPage: React.FC = () => {
 
         // 1. NOT_OPEN 상태
         if (status === 'NOT_OPEN') {
-            return (
+            return (// 퀴즈 오픈 준비 중입니다! 서버 시간 받아서 카운트 다운 하는 
                 <>
                     <GradeText>현재 점수: {userGrade}점</GradeText>
                     <QuizTitle>오늘의 퀴즈는 아직 준비되지 않았습니다. 😭</QuizTitle>
@@ -220,7 +220,7 @@ const QuizPage: React.FC = () => {
 
         // 2. CLOSE 상태
         if (status === 'CLOSE') {
-            return (
+            return ( // 현재 점수가 아닌, 이전 퀴즈에 대한 등수 정도?
                 <>
                     <GradeText>현재 점수: {userGrade}점</GradeText>
                     <QuizTitle>오늘의 퀴즈를 이미 풀었습니다. ✅</QuizTitle>

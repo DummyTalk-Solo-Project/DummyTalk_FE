@@ -31,9 +31,9 @@ const MainContainer = styled.div`
   text-align: center;
 `;
 
-const TriviaText = styled.h1`
+const TriviaText = styled.div`
   color: #EAEFEF; /* 밝은 텍스트 */
-  font-size: 2.5em;
+  font-size: 3em;
   margin-bottom: 50px;
   max-width: 80%;
 `;
@@ -124,9 +124,9 @@ const MainPage: React.FC = () => {
       <Header isLoggedIn={logged} onLogout={handleLogoutSuccess} />
       <MainContainer>
         {/* <TriviaText>{trivia}</TriviaText> */}
-        <div className="trivia-display-area">
-          <TypingText text={trivia} speed={40} />
-        </div>
+        <TriviaText>
+          <TypingText text={trivia} speed={40} />
+        </TriviaText>
         <ButtonGroup>
           <ActionButton onClick={handleRefreshClick}>
             ✨ 잡지식 새로고침
