@@ -10,7 +10,6 @@ import { isAxiosError } from 'axios';
 import type { APIResponse } from '../types/api.tsx'; // 정의한 타입 불러오기
 import { isLoggedIn } from '../utils/auth';
 import IntroModal from '../components/IntroModal';
-import logoImage from ',./public/favicon.svg';
 
 
 // --- Styled Components (디자인 적용) ---
@@ -135,7 +134,7 @@ const MainPage: React.FC = () => {
           <IntroModal 
               onClose={handleModalClose} 
               // ⭐️ 로고 이미지 경로 설정: public 폴더에 favicon.jpg나 favicon.svg가 있다면 사용
-              imageSrc="/favicon.svg" 
+              imageSrc="../../public/favicon.jpg" 
           />
       )}
       {/* 4. Header에 logged 상태와 로그아웃 핸들러를 전달 */}
