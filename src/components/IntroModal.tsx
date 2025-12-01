@@ -64,7 +64,7 @@ const IntroModal: React.FC<IntroModalProps> = ({ onClose, imageSrc }) => {
 
   const handleClose = () => {
     // ⭐️ Local Storage에 플래그 설정: "오늘 소개를 봤다"
-    localStorage.setItem(MODAL_KEY, 'true');
+    // localStorage.setItem(MODAL_KEY, 'true');
     onClose();
   };
 

@@ -79,6 +79,7 @@ const MainPage: React.FC = () => {
   const [trivia, setTrivia] = useState<string>(initialTrivia);
   // 1. 상태 변수 이름을 'logged'로 변경하고, 초기값을 isLoggedIn() 함수로 설정
   const [logged, setLogged] = useState<boolean>(isLoggedIn());
+  
   const navigate = useNavigate();
 
   // 2. 로그아웃 성공 시 호출될 콜백 함수 정의
@@ -87,10 +88,18 @@ const MainPage: React.FC = () => {
     setLogged(false);
   }, []);
 
-  // 팝업 상태 관리: Local Storage를 확인하여 초기화
-  const [showModal, setShowModal] = useState(
-    !localStorage.getItem('hasSeenIntro')
-  );
+  // 팝업 상태 관리: 로그인 이전
+  const [showModal, setShowModal] = useState(!isLoggedIn());
+
+  useEffect(() => {
+    if (logged) {
+      // 로그인 상태가 True가 되면 팝업을 닫습니다.
+      setShowModal(false);
+    } else {
+      // 로그아웃 상태가 되면 팝업을 다시 열어줍니다. (메인 페이지 재진입 시)
+      setShowModal(true);
+    }
+  }, [logged]); // logged 상태가 바뀔 때마다 실행
 
   const handleModalClose = () => {
     setShowModal(false);
