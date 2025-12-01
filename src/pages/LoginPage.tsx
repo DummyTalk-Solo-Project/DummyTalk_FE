@@ -3,8 +3,8 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import styled from 'styled-components';
 import api from '../api/axiosInstance';
-import { setAccessToken } from '../utils/auth';
-import type { APIResponse } from '../types/api';
+import { setAuthData } from '../utils/auth';
+import type { APIResponse, LoginSuccessDTO } from '../types/api';
 
 // --- Styled Components (디자인은 MainPage 참고) ---
 const AuthContainer = styled.div`
@@ -73,15 +73,16 @@ const LoginPage: React.FC = () => {
 
     try {
       // 🚨 주의: 백엔드는 JWT를 응답 Header (Authorization)에 담아줍니다.
-      const response = await api.post<APIResponse<boolean>>("/api/users/login", { email, password });
+      const response = await api.post<APIResponse<LoginSuccessDTO>>("/api/users/login", { email, password });
 
       // JWT가 Header에 있다면, 여기서 추출해야 합니다.
       const jwtToken = response.headers['authorization']; // 소문자로 접근해야 함 (브라우저가 자동 소문자화)
       
-      if (response.data.success && jwtToken) {
+      if (response.data.success && jwtToken && response.data.result) {
         // 'Bearer: ' 접두사 제거
         const token = jwtToken.replace('Bearer: ', '');
-        setAccessToken(token); // 로컬 저장소에 JWT 저장
+        const username = response.data.result.username;
+        setAuthData(token, username); // 로컬 저장소에 JWT 저장
         
         // 로그인 성공 시 메인 페이지로 리다이렉트
         navigate("/", { replace: true }); 

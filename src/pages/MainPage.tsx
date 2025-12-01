@@ -8,7 +8,7 @@ import api from '../api/axiosInstance';
 import type { AxiosResponse } from 'axios';
 import { isAxiosError } from 'axios';
 import type { APIResponse } from '../types/api.tsx'; // 정의한 타입 불러오기
-import { isLoggedIn } from '../utils/auth';
+import { isLoggedIn, getUsername } from '../utils/auth';
 import IntroModal from '../components/IntroModal';
 
 
@@ -67,7 +67,16 @@ const ActionButton = styled.button`
 
 // --- MainPage 컴포넌트 ---
 const MainPage: React.FC = () => {
-  const [trivia, setTrivia] = useState<string>("안녕하세요 처음 뵙네요!");
+
+  const username = getUsername(); // ⭐️ 현재 닉네임 가져오기
+
+  // ⭐️ 닉네임에 따라 초기 trivia 메시지 설정
+  const initialTrivia = username
+    ? `안녕하세요, ${username}님!`
+    : "안녕하세요 처음 뵙네요!";
+
+
+  const [trivia, setTrivia] = useState<string>(initialTrivia);
   // 1. 상태 변수 이름을 'logged'로 변경하고, 초기값을 isLoggedIn() 함수로 설정
   const [logged, setLogged] = useState<boolean>(isLoggedIn());
   const navigate = useNavigate();
@@ -88,7 +97,8 @@ const MainPage: React.FC = () => {
   };
 
   // 잡지식 텍스트를 서버에서 가져오는 함수 (변동 없음)
-  const fetchTrivia = async () => {
+  
+  const fetchTrivia = useCallback (async () => {
     try {
       const response: AxiosResponse<APIResponse<string>> = await api.get("/api/dummies/get-dummy");
 
@@ -109,7 +119,7 @@ const MainPage: React.FC = () => {
         setTrivia("서버와 통신할 수 없습니다. 백엔드 상태를 확인해 주세요.");
       }
     }
-  };
+  }, []);
 
   // 3. 컴포넌트 마운트 시 최초 로그인 상태 확인
   useEffect(() => {
@@ -129,13 +139,13 @@ const MainPage: React.FC = () => {
   return (
     <>
 
-    {/* 팝업 조건부 렌더링 */}
-    {showModal && (
-          <IntroModal 
-              onClose={handleModalClose} 
-              // ⭐️ 로고 이미지 경로 설정: public 폴더에 favicon.jpg나 favicon.svg가 있다면 사용
-              imageSrc="../../public/favicon.jpg" 
-          />
+      {/* 팝업 조건부 렌더링 */}
+      {showModal && (
+        <IntroModal
+          onClose={handleModalClose}
+          // ⭐️ 로고 이미지 경로 설정: public 폴더에 favicon.jpg나 favicon.svg가 있다면 사용
+          imageSrc="../../public/favicon.jpg"
+        />
       )}
       {/* 4. Header에 logged 상태와 로그아웃 핸들러를 전달 */}
       <Header isLoggedIn={logged} onLogout={handleLogoutSuccess} />
