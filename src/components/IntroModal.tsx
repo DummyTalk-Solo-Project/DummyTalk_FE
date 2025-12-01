@@ -49,7 +49,7 @@ const CloseButton = styled.button`
 `;
 
 const ModalImage = styled.img`
-  width: 100px; /* 로고 크기 조정 */
+  width: 250px; /* 로고 크기 조정 */
   height: auto;
   margin-bottom: 20px;
 `;
@@ -72,10 +72,10 @@ const IntroModal: React.FC<IntroModalProps> = ({ onClose, imageSrc }) => {
     <ModalOverlay>
       <ModalContent>
         <ModalImage src={imageSrc} alt="Project Logo" />
-        <h2>더미토크 프로젝트 소개</h2>
+        <h2>DummyTalk 소개</h2>
         <p>
           안녕하세요! 이 웹사이트는 백엔드 개발 학습을 위한 
-          프론트엔드 토이 프로젝트입니다. 
+          백엔드 토이 프로젝트입니다. 
           새로고침을 통해 흥미로운 잡지식을 얻거나, 퀴즈를 풀어보세요!
         </p>
         <CloseButton onClick={handleClose}>
