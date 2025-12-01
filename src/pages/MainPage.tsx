@@ -9,9 +9,9 @@ import type { AxiosResponse } from 'axios';
 import { isAxiosError } from 'axios';
 import type { APIResponse } from '../types/api.tsx'; // 정의한 타입 불러오기
 import { isLoggedIn } from '../utils/auth';
-import ReactDOM from 'react-dom/client';
-import { removeAccessToken } from '../utils/auth.ts'; // 토큰 삭제 함수
-import App from '../App.tsx';
+import IntroModal from '../components/IntroModal';
+import logoImage from ',./public/favicon.svg';
+
 
 // --- Styled Components (디자인 적용) ---
 const MainContainer = styled.div`
@@ -79,6 +79,15 @@ const MainPage: React.FC = () => {
     setLogged(false);
   }, []);
 
+  // 팝업 상태 관리: Local Storage를 확인하여 초기화
+  const [showModal, setShowModal] = useState(
+    !localStorage.getItem('hasSeenIntro')
+  );
+
+  const handleModalClose = () => {
+    setShowModal(false);
+  };
+
   // 잡지식 텍스트를 서버에서 가져오는 함수 (변동 없음)
   const fetchTrivia = async () => {
     try {
@@ -120,13 +129,22 @@ const MainPage: React.FC = () => {
 
   return (
     <>
+
+    {/* 팝업 조건부 렌더링 */}
+    {showModal && (
+          <IntroModal 
+              onClose={handleModalClose} 
+              // ⭐️ 로고 이미지 경로 설정: public 폴더에 favicon.jpg나 favicon.svg가 있다면 사용
+              imageSrc="/favicon.svg" 
+          />
+      )}
       {/* 4. Header에 logged 상태와 로그아웃 핸들러를 전달 */}
       <Header isLoggedIn={logged} onLogout={handleLogoutSuccess} />
       <MainContainer>
         {/* <TriviaText>{trivia}</TriviaText> */}
         <TriviaText>
-          <TypingText text={trivia} speed={40} />
-        </TriviaText>
+          <TypingText text={trivia} speed={40} />
+        </TriviaText>
         <ButtonGroup>
           <ActionButton onClick={handleRefreshClick}>
             ✨ 잡지식 새로고침
