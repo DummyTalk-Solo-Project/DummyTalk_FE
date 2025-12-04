@@ -3,8 +3,6 @@
 import React from 'react';
 import styled, { keyframes } from 'styled-components';
 
-const MODAL_KEY = 'hasSeenIntro';
-
 // ⭐️ 애니메이션 정의 (유령처럼 부드럽게 나타나도록)
 const fadeIn = keyframes`
   from { opacity: 0; transform: translateY(-20px); }
@@ -75,7 +73,7 @@ const IntroModal: React.FC<IntroModalProps> = ({ onClose, imageSrc }) => {
         <h2>DummyTalk 소개</h2>
         <p>
           안녕하세요! 이 웹사이트는 백엔드 개발 학습을 위한 
-          백엔드 토이 프로젝트입니다. 
+          토이 프로젝트입니다. 
           새로고침을 통해 흥미로운 잡지식을 얻거나, 퀴즈를 풀어보세요!
         </p>
         <CloseButton onClick={handleClose}>
