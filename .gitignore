@@ -41,3 +41,4 @@ Thumbs.db # Windows
 !.vscode/launch.json
 !.vscode/extensions.json
 .history # VS Code의 Local History 확장 사용 시
+CLAUDE.md
