@@ -191,6 +191,49 @@ const SecondaryButton = styled(PrimaryButton)`
   }
 `;
 
+// ── Pity Event Banner ────────────────────────────────────────
+const pityPulse = keyframes`
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.6; }
+`;
+
+const PityBanner = styled.div<{ $rarity: RarityName }>`
+  width: 100%;
+  padding: var(--dt-space-3) var(--dt-space-4);
+  border-radius: var(--dt-radius-md);
+  background: ${({ $rarity }) => `${RARITY_COLORS[$rarity]}18`};
+  border: 1px solid ${({ $rarity }) => `${RARITY_COLORS[$rarity]}55`};
+  color: ${({ $rarity }) => RARITY_COLORS[$rarity]};
+  font-family: var(--dt-font-mono);
+  font-size: var(--dt-size-sm);
+  font-weight: var(--dt-weight-bold);
+  letter-spacing: var(--dt-tracking-glitch);
+  text-align: center;
+  animation: ${pityPulse} 2s ease-in-out infinite;
+`;
+
+const RemainingCount = styled.p`
+  font-family: var(--dt-font-mono);
+  font-size: var(--dt-size-xs);
+  color: var(--dt-fg-tertiary);
+  text-align: center;
+  margin: 0;
+  letter-spacing: var(--dt-tracking-glitch);
+`;
+
+const PITY_MESSAGES: Partial<Record<RarityName, string>> = {
+  COMMON:  '다음은 무조건 RARE 더미가 나와요!',
+  RARE:    '다음은 무조건 EPIC 더미가 나와요!',
+  EPIC:    '다음은 무조건 SPECIAL 더미가 나와요!',
+};
+
+const NEXT_RARITY: Record<RarityName, RarityName | null> = {
+  COMMON:  'RARE',
+  RARE:    'EPIC',
+  EPIC:    'SPECIAL',
+  SPECIAL: null,
+};
+
 // ── Glitch strings for loading ───────────────────────────────
 const GLITCH_STRINGS = [
   '▓▒░ FETCHING KNOWLEDGE ░▒▓',
@@ -277,6 +320,8 @@ const MainPage: React.FC = () => {
     }
     if (dummy) {
       const rarity = dummy.rarityName || 'COMMON';
+      const isPity = dummy.currentDummyGradeStack === 10 && rarity !== 'SPECIAL';
+      const nextRarity = isPity ? NEXT_RARITY[rarity as RarityName] : null;
       return (
         <KnowledgeCard $rarity={rarity as RarityName}>
           <RarityBadge $rarity={rarity as RarityName}>
@@ -284,6 +329,11 @@ const MainPage: React.FC = () => {
           </RarityBadge>
           <KnowledgeTitle>{dummy.title || '제목 없음'}</KnowledgeTitle>
           <TypingText text={dummy.content || ''} speed={30} />
+          {isPity && nextRarity && PITY_MESSAGES[rarity as RarityName] && (
+            <PityBanner $rarity={nextRarity}>
+              ✦ {PITY_MESSAGES[rarity as RarityName]}
+            </PityBanner>
+          )}
         </KnowledgeCard>
       );
     }
@@ -324,6 +374,11 @@ const MainPage: React.FC = () => {
               ◈ 퀴즈 도전
             </SecondaryButton>
           </ButtonRow>
+          {dummy?.remainingCount != null && (
+            <RemainingCount>
+              ◈ 오늘 남은 횟수 : {dummy.remainingCount}회
+            </RemainingCount>
+          )}
         </Content>
       </Page>
     </>

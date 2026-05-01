@@ -106,6 +106,49 @@ const Value = styled.span`
   color: var(--dt-fg-primary);
 `;
 
+const StackRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--dt-space-3);
+`;
+
+const StackLabel = styled.span`
+  font-size: var(--dt-size-sm);
+  color: var(--dt-fg-tertiary);
+  flex-shrink: 0;
+`;
+
+const StackBarWrap = styled.div`
+  flex: 1;
+  height: 6px;
+  background: var(--dt-bg-elevated);
+  border-radius: 99px;
+  overflow: hidden;
+`;
+
+const StackBar = styled.div<{ $width: number; $color: string }>`
+  height: 100%;
+  width: ${({ $width }) => $width}%;
+  background: ${({ $color }) => $color};
+  border-radius: 99px;
+  transition: width 0.4s ease;
+`;
+
+const StackValue = styled.span`
+  font-family: var(--dt-font-mono);
+  font-size: var(--dt-size-xs);
+  color: var(--dt-fg-secondary);
+  min-width: 32px;
+  text-align: right;
+`;
+
+const STACK_COLORS: Record<string, string> = {
+  common: 'var(--dt-rarity-common)',
+  rare:   'var(--dt-rarity-rare)',
+  epic:   'var(--dt-rarity-epic)',
+};
+
 const Badge = styled.span<{ $active: boolean }>`
   padding: var(--dt-space-1) var(--dt-space-3);
   border-radius: var(--dt-radius-pill);
@@ -217,6 +260,25 @@ const MyPage: React.FC = () => {
                 <Value>{userData?.subsExprDate?.split('T')[0]}</Value>
               </InfoRow>
             )}
+            <InfoRow style={{ flexDirection: 'column', alignItems: 'stretch', gap: 'var(--dt-space-3)' }}>
+              <Label>천장 스택</Label>
+              {([
+                { key: 'commonStack', label: 'COMMON', color: 'common' },
+                { key: 'rareStack',   label: 'RARE',   color: 'rare'   },
+                { key: 'epicStack',   label: 'EPIC',   color: 'epic'   },
+              ] as const).map(({ key, label, color }) => {
+                const val = userData?.[key] ?? 0;
+                return (
+                  <StackRow key={key}>
+                    <StackLabel>{label}</StackLabel>
+                    <StackBarWrap>
+                      <StackBar $width={(val / 10) * 100} $color={STACK_COLORS[color]} />
+                    </StackBarWrap>
+                    <StackValue>{val} / 10</StackValue>
+                  </StackRow>
+                );
+              })}
+            </InfoRow>
           </InfoCard>
         </Content>
       </Page>

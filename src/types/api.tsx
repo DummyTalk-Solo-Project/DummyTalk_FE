@@ -26,6 +26,8 @@ export interface DummyResponseDTO {
   title: string;
   content: string;
   rarityName: RarityName;
+  currentDummyGradeStack: number;
+  remainingCount: number;
 }
 
 export interface MyDummyItemDTO {
@@ -67,4 +69,7 @@ export interface MyPageDTO {
   reqCount: number;
   isSubscribe: boolean;
   subsExprDate: string | null; // ISO 8601, 미구독 시 null
+  commonStack: number;
+  rareStack: number;
+  epicStack: number;
 }
