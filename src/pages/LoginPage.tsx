@@ -1,127 +1,215 @@
-// pages/LoginPage.tsx
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import styled from 'styled-components';
+import styled, { keyframes } from 'styled-components';
+import { isAxiosError } from 'axios';
 import api from '../api/axiosInstance';
 import { setAuthData } from '../utils/auth';
+import { useToast } from '../components/Toast';
 import type { APIResponse, LoginSuccessDTO } from '../types/api';
 
-// --- Styled Components (디자인은 MainPage 참고) ---
-const AuthContainer = styled.div`
-  background-color: #333446; /* 메인 색상 */
-  
-  /* 뷰포트 전체 높이를 채우도록 설정 */
-  min-height: 100vh; 
-  /* 뷰포트 전체 너비를 채우도록 설정 */
-  width: 100vw; 
-
-  /* 중앙 정렬 */
-  display: flex;
-  flex-direction: column;
-  align-items: center; /* 수평 중앙 정렬 */
-  justify-content: center; /* 수직 중앙 정렬 */
-  text-align: center;
-
-  /* Header가 없으므로 상단에 약간의 패딩 추가 (선택 사항) */
-  padding-top: 50px; 
+// ── Animations ───────────────────────────────────────────────
+const fadeRise = keyframes`
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
 `;
 
-const Card = styled.div`
-  background-color: #B8CFCE; /* 서브 색상 2로 카드 배경 */
-  padding: 40px;
-  border-radius: 10px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  width: 300px;
+// ── Layout ───────────────────────────────────────────────────
+const Page = styled.div`
+  min-height: 100vh;
+  width: 100%;
+  background: var(--dt-bg-base);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--dt-space-6);
+  box-sizing: border-box;
+`;
+
+const Card = styled.form`
+  width: 100%;
+  max-width: 360px;
+  background: var(--dt-bg-surface);
+  border: 1px solid var(--dt-stroke-soft);
+  border-radius: var(--dt-radius-xl);
+  padding: var(--dt-space-10) var(--dt-space-8);
+  box-shadow: var(--dt-shadow-lg), var(--dt-inset-highlight);
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: var(--dt-space-4);
+  animation: ${fadeRise} var(--dt-dur-rise) var(--dt-ease-rise) both;
+`;
+
+const CardLabel = styled.p`
+  font-family: var(--dt-font-mono);
+  font-size: var(--dt-size-xs);
+  letter-spacing: var(--dt-tracking-glitch);
+  text-transform: uppercase;
+  color: var(--dt-lavender-300);
+  margin: 0;
+  text-align: center;
+`;
+
+const CardTitle = styled.h1`
+  font-size: var(--dt-size-2xl);
+  font-weight: var(--dt-weight-bold);
+  letter-spacing: var(--dt-tracking-tight);
+  color: var(--dt-fg-primary);
+  margin: 0 0 var(--dt-space-2);
+  text-align: center;
+`;
+
+const Divider = styled.div`
+  height: 1px;
+  background: var(--dt-stroke-faint);
+  margin: var(--dt-space-2) 0;
 `;
 
 const Input = styled.input`
-  padding: 10px;
-  border: 1px solid #7F8CAA;
-  border-radius: 5px;
-  background-color: #EAEFEF;
-  color: #333446;
+  width: 100%;
+  background: var(--dt-bg-elevated);
+  border: 1px solid var(--dt-stroke-soft);
+  border-radius: var(--dt-radius-md);
+  padding: var(--dt-space-3) var(--dt-space-4);
+  box-sizing: border-box;
+
+  color: var(--dt-fg-primary);
+  font-family: var(--dt-font-sans);
+  font-size: var(--dt-size-base);
+  outline: none;
+  transition: border-color var(--dt-dur-base) var(--dt-ease-snap);
+
+  &::placeholder {
+    color: var(--dt-fg-disabled);
+  }
+
+  &:focus {
+    border-color: var(--dt-stroke-accent);
+    box-shadow: 0 0 0 3px rgba(154, 123, 240, 0.12);
+  }
 `;
 
-const AuthButton = styled.button`
-  background-color: #7F8CAA;
-  color: #EAEFEF;
-  padding: 10px;
+const SubmitButton = styled.button`
+  width: 100%;
+  background: var(--dt-accent);
   border: none;
-  border-radius: 5px;
+  border-radius: var(--dt-radius-md);
+  padding: var(--dt-space-4);
+  margin-top: var(--dt-space-2);
+
+  color: var(--dt-fg-on-accent);
+  font-family: var(--dt-font-sans);
+  font-size: var(--dt-size-md);
+  font-weight: var(--dt-weight-semibold);
   cursor: pointer;
-  &:hover { background-color: #B8CFCE; color: #333446; }
+  transition: all var(--dt-dur-base) var(--dt-ease-snap);
+
+  &:hover:not(:disabled) {
+    box-shadow: var(--dt-glow-bloom);
+    transform: translateY(-1px);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 `;
 
-const ErrorMessage = styled.p`
-  color: #ff5555;
-  font-size: 0.9em;
+const ErrorMsg = styled.p`
+  font-size: var(--dt-size-sm);
+  color: var(--dt-danger);
+  margin: 0;
   text-align: center;
+  line-height: var(--dt-leading-snug);
 `;
-// --- LoginPage 컴포넌트 ---
+
+const FooterLink = styled(Link)`
+  font-size: var(--dt-size-sm);
+  color: var(--dt-fg-tertiary);
+  text-align: center;
+  text-decoration: none;
+  transition: color var(--dt-dur-base) var(--dt-ease-snap);
+
+  &:hover {
+    color: var(--dt-accent);
+  }
+`;
+
+// ── Component ────────────────────────────────────────────────
 const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
   const navigate = useNavigate();
+  const { showToast } = useToast();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setIsLoading(true);
 
     try {
-      // 🚨 주의: 백엔드는 JWT를 응답 Header (Authorization)에 담아줍니다.
-      const response = await api.post<APIResponse<LoginSuccessDTO>>("/api/users/login", { email, password });
+      const response = await api.post<APIResponse<LoginSuccessDTO>>(
+        '/api/members/login',
+        { email, password }
+      );
 
-      // JWT가 Header에 있다면, 여기서 추출해야 합니다.
-      const jwtToken = response.headers['authorization']; // 소문자로 접근해야 함 (브라우저가 자동 소문자화)
-      
-      if (response.data.success && jwtToken && response.data.result) {
-        // 'Bearer: ' 접두사 제거
-        const token = jwtToken.replace('Bearer: ', '');
-        const username = response.data.result.username;
-        setAuthData(token, username); // 로컬 저장소에 JWT 저장
+      const result = response.data.result;
+      const isLoginSuccess = response.data.isSuccess || response.data.success || response.data.code === 'MEMBER2001';
+
+      if (isLoginSuccess && result?.accessToken) {
+        // 토큰과 유저 정보를 먼저 저장
+        setAuthData(result.accessToken, result.memberName);
         
-        // 로그인 성공 시 메인 페이지로 리다이렉트
-        navigate("/", { replace: true }); 
+        // 피드백 제공 후 이동
+        showToast(response.data.message || '로그인에 성공했습니다.', 'success');
+        
+        // 약간의 지연 없이 즉시 이동 (replace: true로 뒤로가기 방지)
+        navigate('/', { replace: true });
       } else {
-        // success가 false일 때 서버 메시지 표시
-        setError(response.data.message || '로그인에 실패했습니다. 이메일과 비밀번호를 확인해주세요.');
+        const errorMsg = response.data.message || '로그인에 실패했습니다. 정보를 다시 확인해주세요.';
+        setError(errorMsg);
+        showToast(errorMsg, 'error');
       }
     } catch (err) {
-      // Axios 에러 처리 (4xx, 5xx 에러)
-      setError('로그인 요청 중 문제가 발생했습니다. 서버 상태를 확인해주세요.');
-      console.error(err);
+      if (isAxiosError(err)) {
+        setError(err.response?.data?.message || '로그인 요청 중 문제가 발생했습니다.');
+      } else {
+        setError('알 수 없는 오류가 발생했습니다.');
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <AuthContainer>
-      <Card as="form" onSubmit={handleLogin}>
-        <h2>로그인</h2>
-        <Input 
-          type="email" 
-          placeholder="사용자 이메일" 
-          value={email} 
-          onChange={(e) => setEmail(e.target.value)} 
+    <Page>
+      <Card onSubmit={handleLogin}>
+        <CardLabel>◈ MEMBER ACCESS</CardLabel>
+        <CardTitle>로그인</CardTitle>
+        <Divider />
+        <Input
+          type="email"
+          placeholder="이메일"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
           required
         />
-        <Input 
-          type="password" 
-          placeholder="패스워드" 
-          value={password} 
-          onChange={(e) => setPassword(e.target.value)} 
+        <Input
+          type="password"
+          placeholder="비밀번호"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
           required
         />
-        {error && <ErrorMessage>{error}</ErrorMessage>}
-        <AuthButton type="submit">로그인</AuthButton>
-        <Link to="/sign-in" style={{ textAlign: 'center', fontSize: '0.9em', color: '#333446' }}>
-          계정이 없으신가요?
-        </Link>
+        {error && <ErrorMsg>{error}</ErrorMsg>}
+        <SubmitButton type="submit" disabled={isLoading}>
+          {isLoading ? '인증 중...' : '로그인'}
+        </SubmitButton>
+        <FooterLink to="/sign-in">계정이 없으신가요? 회원가입</FooterLink>
       </Card>
-    </AuthContainer>
+    </Page>
   );
 };
 

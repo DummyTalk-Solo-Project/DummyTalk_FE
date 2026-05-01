@@ -1,47 +1,70 @@
-// types/api.ts
-
-// 백엔드 전체 응답 형식
+// 공통 응답 래퍼 — 최상위 isSuccess 필드 (BE 실제 반환값 기준)
 export interface APIResponse<T> {
-  success: boolean;
+  isSuccess: boolean;
+  success?: boolean; // 백엔드 필드명 혼용 대비
   code: string;
   message: string;
-  result: T | null; // T는 데이터 타입, result는 데이터가 없을 때 null일 수 있음
+  result: T | null;
 }
 
-// DummyControllerV2.getQuiz API 응답 데이터 형식
-export type QuizStatus = "NOT_OPEN" | "OPEN" | "CLOSE";
+// ── Quiz ──────────────────────────────────────────────────────
+export type QuizStatus = 'NOT_OPEN' | 'OPEN' | 'CLOSE';
 
-export interface GetQuizInfoResponseDTO {
-  status: QuizStatus; 
-  userGrade: number; // Integer (Java) -> number (TS)
-  quizId: number;    // Long (Java) -> number (TS)
+export interface QuizResponseDTO {
+  status: QuizStatus;
+  userGrade: number | null; // BE: 미구현, 항상 null
+  quizId: number;
   title: string;
-  answerList: string[]; // List<String> (Java) -> string[] (TS)
+  answerList: string[];
 }
 
-// types/api.ts (추가)
-// LoginRequestDTO 타입
+// ── Dummy (가챠) ───────────────────────────────────────────────
+export type RarityName = 'COMMON' | 'RARE' | 'EPIC' | 'SPECIAL';
+
+export interface DummyResponseDTO {
+  dummyId: number;
+  title: string;
+  content: string;
+  rarityName: RarityName;
+}
+
+export interface MyDummyItemDTO {
+  dummyId: number;
+  title: string;
+  content: string;
+  name: RarityName;
+  createdAt: string; // ISO 8601
+  rarityId: number;
+  colorCode: string; // HEX
+}
+
+// ── Member ─────────────────────────────────────────────────────
 export interface LoginRequestDTO {
   email: string;
   password: string;
 }
 
-// LoginSuccessDTO 타입 (백엔드가 응답 본문에 username을 주지만, Header에만 JWT를 주므로 필요 없을 수도 있음)
 export interface LoginSuccessDTO {
-  username: string; // 사용자 이름
+  isSuccess: boolean;
+  memberName: string;
   accessToken: string;
 }
 
-// types/api.ts (추가)
-// VerificationRequestDTO 타입
 export interface VerificationRequestDTO {
-    email: string;
-    code: string;
+  email: string;
+  code: string;
 }
 
-// SignInRequestDTO 타입
 export interface SignInRequestDTO {
-    username: string;
-    email: string;
-    password: string;
+  username: string;
+  email: string;
+  password: string;
+}
+
+export interface MyPageDTO {
+  memberName: string;
+  email: string;
+  reqCount: number;
+  isSubscribe: boolean;
+  subsExprDate: string | null; // ISO 8601, 미구독 시 null
 }

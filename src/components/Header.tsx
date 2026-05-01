@@ -1,82 +1,113 @@
-// components/Header.tsx
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom'; // useNavigate 추가
-import axios from 'axios'; // axios 추가
-import { removeAccessToken } from '../utils/auth'; // JWT 삭제 유틸리티 함수 import
+import { Link, useNavigate } from 'react-router-dom';
+import styled from 'styled-components';
+import api from '../api/axiosInstance';
+import { removeAccessToken } from '../utils/auth';
 
-// Prop 타입을 정의하는 인터페이스 (onLogout 핸들러 추가)
 interface HeaderProps {
   isLoggedIn: boolean;
-  onLogout: () => void; // MainPage에서 전달받은 콜백 함수
+  onLogout: () => void;
 }
 
-// React.FC (Function Component)와 함께 Props 타입을 사용
+const Nav = styled.header`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  height: 60px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--dt-space-6);
+
+  background: rgba(20, 20, 27, 0.80);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--dt-stroke-faint);
+`;
+
+const Brand = styled(Link)`
+  font-family: var(--dt-font-mono);
+  font-size: var(--dt-size-sm);
+  font-weight: var(--dt-weight-bold);
+  letter-spacing: var(--dt-tracking-glitch);
+  text-transform: uppercase;
+  color: var(--dt-lavender-300);
+  text-decoration: none;
+  transition: color var(--dt-dur-base) var(--dt-ease-snap);
+
+  &:hover {
+    color: var(--dt-fg-primary);
+  }
+`;
+
+const NavLinks = styled.nav`
+  display: flex;
+  align-items: center;
+  gap: var(--dt-space-5);
+`;
+
+const NavLink = styled(Link)`
+  font-size: var(--dt-size-sm);
+  font-weight: var(--dt-weight-medium);
+  color: var(--dt-fg-tertiary);
+  text-decoration: none;
+  transition: color var(--dt-dur-base) var(--dt-ease-snap);
+
+  &:hover {
+    color: var(--dt-fg-primary);
+  }
+`;
+
+const NavButton = styled.button`
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: var(--dt-font-sans);
+  font-size: var(--dt-size-sm);
+  font-weight: var(--dt-weight-medium);
+  color: var(--dt-fg-tertiary);
+  cursor: pointer;
+  transition: color var(--dt-dur-base) var(--dt-ease-snap);
+
+  &:hover {
+    color: var(--dt-danger);
+  }
+`;
+
 const Header: React.FC<HeaderProps> = ({ isLoggedIn, onLogout }) => {
   const navigate = useNavigate();
 
-  // 1. 로그아웃 처리 함수 정의
   const handleLogout = async () => {
     try {
-      // 🚨 서버에 로그아웃 요청을 보냅니다. (토큰 무효화)
-      // NOTE: JWT는 Axios Interceptor를 통해 Header에 자동으로 포함되어야 합니다.
-      await axios.post("/api/users/logout"); 
-    } catch (error) {
-      console.error("Logout API failed, but proceeding with local cleanup:", error);
-      // API 실패하더라도 로컬 토큰 삭제는 진행하여 로그아웃 상태를 만듭니다.
+      await api.post('/api/members/logout');
+    } catch {
+      // API 실패해도 로컬 토큰 삭제 진행
     }
-    
-    // 2. 로컬에서 JWT 삭제
     removeAccessToken();
-    
-    // 3. MainPage에 상태 변경을 알림 (Logged: false로 변경)
-    onLogout(); 
-
-    // 4. 메인 페이지로 이동
-    navigate("/", { replace: true }); 
+    onLogout();
+    navigate('/', { replace: true });
   };
 
   return (
-    <header style={{ 
-        color: '#EAEFEF', 
-        padding: '20px 40px', // 세로 20px 패딩
-        textAlign: 'right', 
-        backgroundColor: '#333446', 
-        width: '95%', 
-        
-        // ⭐️⭐️⭐️ 수정 1: 상단에 고정 및 Z-Index 부여 ⭐️⭐️⭐️
-        position: 'fixed', // 화면 스크롤과 무관하게 고정
-        top: 0,
-        left: 0,
-        zIndex: 100, // MainContainer 위에 있도록
-        height: '70px', // 명시적인 높이 지정 (20px*2 패딩 + 폰트 높이)
-    }}>
-      <nav>
+    <Nav>
+      <Brand to="/">◈ DUMMYTALK</Brand>
+      <NavLinks>
         {isLoggedIn ? (
           <>
-            {/* 5. Logout Link를 Button으로 변경하고 handleLogout 함수 연결 */}
-            <button 
-                onClick={handleLogout} 
-                style={{ 
-                    color: '#7F8CAA', 
-                    marginLeft: '15px', 
-                    background: 'none', 
-                    border: 'none', 
-                    cursor: 'pointer',
-                    fontSize: '1em' // Link 스타일과 맞추기 위해 폰트 크기 지정
-                }}
-            >
-                Logout
-            </button>
-            <Link to="/my-page" style={{ color: '#7F8CAA', marginLeft: '15px' }}>MyPage</Link>
+            <NavLink to="/my-page">마이페이지</NavLink>
+            <NavButton onClick={handleLogout}>로그아웃</NavButton>
           </>
         ) : (
           <>
-            <Link to="/login" style={{ color: '#7F8CAA', marginLeft: '15px' }}>Login</Link>
-            <Link to="/sign-in" style={{ color: '#7F8CAA', marginLeft: '15px' }}>Sign In</Link>
+            <NavLink to="/login">로그인</NavLink>
+            <NavLink to="/sign-in">회원가입</NavLink>
           </>
         )}
-      </nav>
-    </header>
+      </NavLinks>
+    </Nav>
   );
 };
 

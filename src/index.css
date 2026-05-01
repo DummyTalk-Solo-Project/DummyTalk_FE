@@ -1,68 +1,205 @@
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap');
+
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+  --dt-bg-void:        #0B0B10;
+  --dt-bg-base:        #14141B;
+  --dt-bg-surface:     #1C1C26;
+  --dt-bg-elevated:    #242431;
+  --dt-bg-overlay:     rgba(11, 11, 16, 0.72);
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  --dt-fg-primary:     #F4F1FA;
+  --dt-fg-secondary:   #B8B4C7;
+  --dt-fg-tertiary:    #7C7891;
+  --dt-fg-disabled:    #4A475A;
+  --dt-fg-on-accent:   #0B0B10;
 
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
+  --dt-lavender-50:    #F2EDFF;
+  --dt-lavender-100:   #E2D6FF;
+  --dt-lavender-200:   #C9B5FF;
+  --dt-lavender-300:   #B194FF;
+  --dt-lavender-400:   #9A7BF0;
+  --dt-lavender-500:   #8264D9;
+  --dt-lavender-600:   #6A4FB8;
+  --dt-lavender-700:   #4F3A8C;
+  --dt-lavender-800:   #342562;
+  --dt-lavender-900:   #1E1538;
+
+  --dt-accent:         var(--dt-lavender-400);
+  --dt-accent-soft:    var(--dt-lavender-800);
+
+  --dt-glow-white:     rgba(255, 252, 245, 0.85);
+  --dt-glow-lavender:  rgba(154, 123, 240, 0.55);
+
+  --dt-success:        #6FD9A8;
+  --dt-warning:        #E8C56A;
+  --dt-danger:         #E07A8E;
+  --dt-info:           var(--dt-lavender-300);
+
+  --dt-rarity-common:    #7C7891;
+  --dt-rarity-rare:      #6FA8D9;
+  --dt-rarity-epic:      #B194FF;
+  --dt-rarity-legendary: #E8C56A;
+  --dt-rarity-mythic:    #FF9BC9;
+  --dt-rarity-special:   var(--dt-rarity-legendary); /* BE API SPECIAL → legendary */
+
+  --dt-stroke-faint:   rgba(244, 241, 250, 0.06);
+  --dt-stroke-soft:    rgba(244, 241, 250, 0.10);
+  --dt-stroke-strong:  rgba(244, 241, 250, 0.18);
+  --dt-stroke-accent:  rgba(154, 123, 240, 0.40);
+
+  --dt-font-sans: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont,
+    'Segoe UI', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+  --dt-font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --dt-font-display: var(--dt-font-sans);
+
+  --dt-size-xs:    11px;
+  --dt-size-sm:    13px;
+  --dt-size-base:  15px;
+  --dt-size-md:    17px;
+  --dt-size-lg:    20px;
+  --dt-size-xl:    24px;
+  --dt-size-2xl:   30px;
+  --dt-size-3xl:   38px;
+  --dt-size-4xl:   48px;
+  --dt-size-5xl:   60px;
+
+  --dt-weight-light:    300;
+  --dt-weight-regular:  400;
+  --dt-weight-medium:   500;
+  --dt-weight-semibold: 600;
+  --dt-weight-bold:     700;
+
+  --dt-leading-tight:    1.15;
+  --dt-leading-snug:     1.35;
+  --dt-leading-normal:   1.55;
+  --dt-leading-relaxed:  1.75;
+
+  --dt-tracking-tight:   -0.02em;
+  --dt-tracking-normal:  0em;
+  --dt-tracking-wide:    0.04em;
+  --dt-tracking-glitch:  0.12em;
+
+  --dt-radius-xs:   4px;
+  --dt-radius-sm:   8px;
+  --dt-radius-md:   12px;
+  --dt-radius-lg:   16px;
+  --dt-radius-xl:   24px;
+  --dt-radius-2xl:  32px;
+  --dt-radius-pill: 999px;
+
+  --dt-space-1:  4px;
+  --dt-space-2:  8px;
+  --dt-space-3:  12px;
+  --dt-space-4:  16px;
+  --dt-space-5:  20px;
+  --dt-space-6:  24px;
+  --dt-space-8:  32px;
+  --dt-space-10: 40px;
+  --dt-space-12: 48px;
+  --dt-space-16: 64px;
+  --dt-space-20: 80px;
+
+  --dt-shadow-sm: 0 1px 2px rgba(0,0,0,0.40);
+  --dt-shadow-md: 0 6px 18px rgba(0,0,0,0.45);
+  --dt-shadow-lg: 0 18px 48px rgba(0,0,0,0.55);
+
+  --dt-glow-soft:  0 0 24px rgba(244,241,250,0.10), 0 0 48px rgba(154,123,240,0.18);
+  --dt-glow-bloom: 0 0 36px rgba(244,241,250,0.18), 0 0 80px rgba(154,123,240,0.32);
+  --dt-glow-burst: 0 0 48px rgba(244,241,250,0.40), 0 0 120px rgba(154,123,240,0.55);
+
+  --dt-inset-highlight: inset 0 1px 0 rgba(244,241,250,0.04),
+                        inset 0 0 0 1px rgba(244,241,250,0.04);
+
+  --dt-ease-float: cubic-bezier(0.22, 1, 0.36, 1);
+  --dt-ease-rise:  cubic-bezier(0.16, 1, 0.3, 1);
+  --dt-ease-snap:  cubic-bezier(0.4, 0.0, 0.2, 1);
+
+  --dt-dur-quick:  180ms;
+  --dt-dur-base:   320ms;
+  --dt-dur-soft:   600ms;
+  --dt-dur-rise:   900ms;
+  --dt-dur-bloom:  1200ms;
+
+  --dt-content-width: 480px;
+  --dt-content-wide:  720px;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  min-height: 100%;
+  background: var(--dt-bg-base);
+  color: var(--dt-fg-primary);
+  font-family: var(--dt-font-sans);
+  font-size: var(--dt-size-base);
+  font-weight: var(--dt-weight-regular);
+  line-height: var(--dt-leading-normal);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
 }
 
 a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
+  color: var(--dt-accent);
+  text-decoration: none;
+  transition: color var(--dt-dur-base) var(--dt-ease-snap);
 }
 a:hover {
-  color: #535bf2;
-}
-
-body, html {
-  margin: 0;
-  padding: 0;
-  width: 100%; 
-  height: 100%;
-  overflow: hidden;
-}
-
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+  color: var(--dt-lavender-300);
 }
 
 button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+  font-family: var(--dt-font-sans);
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
+@keyframes dt-float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-6px); }
 }
+
+@keyframes dt-fade-rise {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes dt-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes dt-pulse-glow {
+  0%, 100% { box-shadow: var(--dt-glow-soft); }
+  50%      { box-shadow: var(--dt-glow-bloom); }
+}
+
+@keyframes dt-shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes dt-glitch-shake {
+  0%, 100% { transform: translate(0,0); }
+  20%      { transform: translate(-1px, 1px); }
+  40%      { transform: translate(1px, -1px); }
+  60%      { transform: translate(-1px, -1px); }
+  80%      { transform: translate(1px, 1px); }
+}
+
+@keyframes dt-spin-slow {
+  to { transform: rotate(360deg); }
+}
+
+.dt-enter      { animation: dt-fade-rise var(--dt-dur-rise) var(--dt-ease-rise) both; }
+.dt-enter-fade { animation: dt-fade-in var(--dt-dur-bloom) var(--dt-ease-float) both; }
+.dt-floats     { animation: dt-float 4s var(--dt-ease-float) infinite; }

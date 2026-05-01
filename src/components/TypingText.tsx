@@ -1,36 +1,48 @@
-// src/components/TypingText.tsx
-
 import React, { useState, useEffect } from 'react';
+import styled from 'styled-components';
+
+const TextBody = styled.p`
+  font-family: var(--dt-font-sans);
+  font-size: var(--dt-size-md);
+  font-weight: var(--dt-weight-regular);
+  line-height: var(--dt-leading-relaxed);
+  letter-spacing: var(--dt-tracking-wide);
+  color: var(--dt-fg-primary);
+  margin: 0;
+  text-wrap: pretty;
+  word-break: keep-all;
+`;
 
 interface TypingTextProps {
   text: string;
-  speed?: number; // 한 글자 출력 속도 (ms)
+  speed?: number;
 }
 
-const TypingText: React.FC<TypingTextProps> = ({ text, speed = 50 }) => {
+const TypingText: React.FC<TypingTextProps> = ({ text, speed = 40 }) => {
   const [displayText, setDisplayText] = useState('');
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [prevText, setPrevText] = useState(text);
+
+  // Prop 변경 시 상태 초기화 (Effect 대신 렌더링 도중 처리 - React 권장 패턴)
+  if (text !== prevText) {
+    setDisplayText('');
+    setCurrentIndex(0);
+    setPrevText(text);
+  }
 
   useEffect(() => {
-    if (currentIndex < text.length) {
+    if (text && currentIndex < text.length) {
       const timeout = setTimeout(() => {
         setDisplayText((prev) => prev + text[currentIndex]);
         setCurrentIndex((prev) => prev + 1);
       }, speed);
-
-      // Effect 정리 함수 (컴포넌트 unmount 시 타이머 해제)
       return () => clearTimeout(timeout);
     }
-    // currentIndex가 text.length와 같아지면 (모든 글자 출력 완료) 더 이상 실행되지 않음
   }, [text, currentIndex, speed]);
 
-  // text가 바뀔 때마다 (새로운 퀴즈를 받아올 때마다) 상태 초기화
-  useEffect(() => {
-    setDisplayText('');
-    setCurrentIndex(0);
-  }, [text]);
+  if (!text) return null;
 
-  return <p>{displayText}</p>; // 실제 출력되는 부분
+  return <TextBody>{displayText}</TextBody>;
 };
 
 export default TypingText;

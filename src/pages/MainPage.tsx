@@ -1,177 +1,331 @@
-// pages/MainPage.tsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Header from '../components/Header';
-import styled from 'styled-components';
-import TypingText from '../components/TypingText.tsx';
-import api from '../api/axiosInstance';
-import type { AxiosResponse } from 'axios';
+import styled, { keyframes, css } from 'styled-components';
 import { isAxiosError } from 'axios';
-import type { APIResponse } from '../types/api.tsx'; // 정의한 타입 불러오기
+import type { AxiosResponse } from 'axios';
+import api from '../api/axiosInstance';
+import type { APIResponse, DummyResponseDTO, RarityName } from '../types/api';
 import { isLoggedIn, getUsername } from '../utils/auth';
+import { useToast } from '../components/Toast';
+import Header from '../components/Header';
+import TypingText from '../components/TypingText';
 import IntroModal from '../components/IntroModal';
 
+// ── Animations ───────────────────────────────────────────────
+const fadeRise = keyframes`
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+`;
 
-// --- Styled Components (디자인 적용) ---
-const MainContainer = styled.div`
-  background-color: #333446; /* 메인 색상 */
-  
-  min-height: 100vh; /* 뷰포트 높이 전체 */
-  width: 100vw; /* 뷰포트 너비 전체 */
+const pulseGlow = keyframes`
+  0%, 100% { box-shadow: var(--dt-glow-soft); }
+  50%       { box-shadow: var(--dt-glow-bloom); }
+`;
 
-  padding-top: 70px;
-
-
-  /* 중앙 정렬 */
+// ── Layout ───────────────────────────────────────────────────
+const Page = styled.div`
+  min-height: 100vh;
+  width: 100%;
+  background: var(--dt-bg-base);
   display: flex;
   flex-direction: column;
-  align-items: center; /* 수평 중앙 정렬 */
-  justify-content: center; /* 수직 중앙 정렬 */
+  align-items: center;
+  justify-content: center;
+  padding: 80px var(--dt-space-6) var(--dt-space-10);
+  box-sizing: border-box;
+`;
+
+const Content = styled.div`
+  width: 100%;
+  max-width: var(--dt-content-width);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--dt-space-8);
+  animation: ${fadeRise} var(--dt-dur-rise) var(--dt-ease-rise) both;
+`;
+
+// ── Greeting ─────────────────────────────────────────────────
+const Greeting = styled.div`
   text-align: center;
 `;
 
-const TriviaText = styled.div`
-  color: #EAEFEF; /* 밝은 텍스트 */
-  font-size: 3em;
-  margin-bottom: 50px;
-  max-width: 80%;
+const GreetingName = styled.p`
+  font-family: var(--dt-font-mono);
+  font-size: var(--dt-size-xs);
+  letter-spacing: var(--dt-tracking-glitch);
+  text-transform: uppercase;
+  color: var(--dt-lavender-300);
+  margin: 0 0 var(--dt-space-2);
 `;
 
-const ButtonGroup = styled.div`
+const GreetingTitle = styled.h1`
+  font-size: var(--dt-size-2xl);
+  font-weight: var(--dt-weight-bold);
+  letter-spacing: var(--dt-tracking-tight);
+  color: var(--dt-fg-primary);
+  margin: 0;
+`;
+
+// ── Knowledge Card ───────────────────────────────────────────
+const RARITY_COLORS: Record<string, string> = {
+  COMMON:  'var(--dt-rarity-common)',
+  RARE:    'var(--dt-rarity-rare)',
+  EPIC:    'var(--dt-rarity-epic)',
+  SPECIAL: 'var(--dt-rarity-special)',
+};
+
+const RARITY_LABELS: Record<string, string> = {
+  COMMON:  'COMMON',
+  RARE:    'RARE',
+  EPIC:    'EPIC',
+  SPECIAL: 'SPECIAL',
+};
+
+const KnowledgeCard = styled.div<{ $rarity?: RarityName; $loading?: boolean }>`
+  width: 100%;
+  background: var(--dt-bg-surface);
+  border: 1px solid ${({ $rarity }) =>
+    $rarity ? 'transparent' : 'var(--dt-stroke-soft)'};
+  border-radius: var(--dt-radius-xl);
+  padding: var(--dt-space-8);
+  box-shadow: ${({ $loading }) =>
+    $loading ? 'none' : 'var(--dt-shadow-md), var(--dt-inset-highlight)'};
   display: flex;
-  gap: 30px;
+  flex-direction: column;
+  gap: var(--dt-space-4);
+  box-sizing: border-box;
+  position: relative;
+  overflow: hidden;
+
+  ${({ $rarity }) =>
+    $rarity &&
+    css`
+      outline: 1px solid ${RARITY_COLORS[$rarity]};
+      box-shadow: 0 0 32px ${RARITY_COLORS[$rarity]}22, var(--dt-shadow-md);
+    `}
+
+  ${({ $loading }) =>
+    $loading &&
+    css`
+      animation: ${pulseGlow} 1.5s ease infinite;
+    `}
 `;
 
-const ActionButton = styled.button`
-  background-color: #7F8CAA; /* 서브 색상 1 */
-  color: #EAEFEF;
+const RarityBadge = styled.span<{ $rarity: RarityName }>`
+  display: inline-block;
+  font-family: var(--dt-font-mono);
+  font-size: var(--dt-size-xs);
+  font-weight: var(--dt-weight-bold);
+  letter-spacing: var(--dt-tracking-glitch);
+  text-transform: uppercase;
+  color: ${({ $rarity }) => RARITY_COLORS[$rarity]};
+  align-self: flex-start;
+`;
+
+const KnowledgeTitle = styled.h2`
+  font-size: var(--dt-size-lg);
+  font-weight: var(--dt-weight-semibold);
+  line-height: var(--dt-leading-snug);
+  letter-spacing: var(--dt-tracking-tight);
+  color: var(--dt-fg-primary);
+  margin: 0;
+`;
+
+const LoadingPlaceholder = styled.p`
+  font-family: var(--dt-font-mono);
+  font-size: var(--dt-size-xs);
+  letter-spacing: var(--dt-tracking-glitch);
+  text-transform: uppercase;
+  color: var(--dt-lavender-300);
+  margin: var(--dt-space-4) 0;
+  text-align: center;
+`;
+
+// ── Buttons ──────────────────────────────────────────────────
+const ButtonRow = styled.div`
+  display: flex;
+  gap: var(--dt-space-4);
+  width: 100%;
+`;
+
+const PrimaryButton = styled.button`
+  flex: 1;
+  background: var(--dt-accent);
   border: none;
-  border-radius: 10px;
-  padding: 15px 30px;
-  font-size: 1.2em;
-  cursor: pointer;
-  transition: background-color 0.3s, transform 0.1s;
+  border-radius: var(--dt-radius-md);
+  padding: var(--dt-space-4) var(--dt-space-5);
 
-  &:hover {
-    background-color: #B8CFCE; /* 서브 색상 2 (Hover) */
-    color: #333446; 
+  color: var(--dt-fg-on-accent);
+  font-family: var(--dt-font-sans);
+  font-size: var(--dt-size-base);
+  font-weight: var(--dt-weight-semibold);
+  cursor: pointer;
+  transition: all var(--dt-dur-base) var(--dt-ease-snap);
+
+  &:hover:not(:disabled) {
+    box-shadow: var(--dt-glow-bloom);
+    transform: translateY(-1px);
   }
 
-  &:active {
-    transform: scale(0.98);
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
   }
 `;
 
-// NOTE: HeaderProps 인터페이스 정의는 Header.tsx 파일에 있어야 합니다. 
-// MainPage에서는 Header 컴포넌트와 그 Prop을 사용하기만 합니다. 
+const SecondaryButton = styled(PrimaryButton)`
+  background: var(--dt-bg-elevated);
+  color: var(--dt-fg-primary);
+  border: 1px solid var(--dt-stroke-soft);
 
-// --- MainPage 컴포넌트 ---
+  &:hover:not(:disabled) {
+    background: var(--dt-bg-elevated);
+    border-color: var(--dt-stroke-accent);
+    box-shadow: var(--dt-glow-soft);
+    transform: translateY(-1px);
+  }
+`;
+
+// ── Glitch strings for loading ───────────────────────────────
+const GLITCH_STRINGS = [
+  '▓▒░ FETCHING KNOWLEDGE ░▒▓',
+  'データ転送中...',
+  '◈ SIGNAL INCOMING ◈',
+  '존재 탐색 중...',
+];
+
+// ── Component ────────────────────────────────────────────────
 const MainPage: React.FC = () => {
+  const username = getUsername();
 
-  const username = getUsername(); // ⭐️ 현재 닉네임 가져오기
+  const [dummy, setDummy] = useState<DummyResponseDTO | null>(null);
+  const [isFetching, setIsFetching] = useState(false);
+  const [drawError, setDrawError] = useState<string | null>(null);
+  const [glitchIdx, setGlitchIdx] = useState(0);
+  const [logged, setLogged] = useState(isLoggedIn());
+  const [showModal, setShowModal] = useState(!isLoggedIn());
 
-  // ⭐️ 닉네임에 따라 초기 trivia 메시지 설정
-  const initialTrivia = username
-    ? `안녕하세요, ${username}님!`
-    : "안녕하세요 처음 뵙네요!";
-
-
-  const [trivia, setTrivia] = useState<string>(initialTrivia);
-  // 1. 상태 변수 이름을 'logged'로 변경하고, 초기값을 isLoggedIn() 함수로 설정
-  const [logged, setLogged] = useState<boolean>(isLoggedIn());
-  
   const navigate = useNavigate();
+  const { showToast } = useToast();
 
-  // 2. 로그아웃 성공 시 호출될 콜백 함수 정의
+  // 글리치 텍스트 사이클링 (로딩 중에만)
+  useEffect(() => {
+    if (!isFetching) return;
+    const id = setInterval(
+      () => setGlitchIdx((i) => (i + 1) % GLITCH_STRINGS.length),
+      500
+    );
+    return () => clearInterval(id);
+  }, [isFetching]);
+
+  useEffect(() => {
+    setShowModal(!logged);
+  }, [logged]);
+
   const handleLogoutSuccess = useCallback(() => {
-    // 로그아웃 시 logged 상태를 false로 업데이트
     setLogged(false);
   }, []);
 
-  // 팝업 상태 관리: 로그인 이전
-  const [showModal, setShowModal] = useState(!isLoggedIn());
-
-  useEffect(() => {
-    if (logged) {
-      // 로그인 상태가 True가 되면 팝업을 닫습니다.
-      setShowModal(false);
-    } else {
-      // 로그아웃 상태가 되면 팝업을 다시 열어줍니다. (메인 페이지 재진입 시)
-      setShowModal(true);
-    }
-  }, [logged]); // logged 상태가 바뀔 때마다 실행
-
-  const handleModalClose = () => {
-    setShowModal(false);
-  };
-
-  // 잡지식 텍스트를 서버에서 가져오는 함수 (변동 없음)
-  
-  const fetchTrivia = useCallback (async () => {
+  const fetchDummy = useCallback(async () => {
+    if (isFetching) return;
+    setIsFetching(true);
+    setDrawError(null);
     try {
-      const response: AxiosResponse<APIResponse<string>> = await api.get("/api/dummies/get-dummy");
-
-      if (response.data.success && response.data.result) {
-        setTrivia(response.data.result);
+      const res: AxiosResponse<APIResponse<DummyResponseDTO>> =
+        await api.get('/api/dummies/dummy');
+      if (res.data.isSuccess || res.data.success) {
+        setDummy(res.data.result);
       } else {
-        setTrivia(response.data.message || "잡지식을 불러오는 데 실패했어요. 다시 시도해 주세요.");
+        setDrawError(res.data.message || '잡지식을 불러오지 못했어요.');
+        showToast(res.data.message || '잡지식을 불러오지 못했어요.', 'error');
       }
-    } catch (error) {
-      if (isAxiosError(error)) {
-
-        const errorMessage = error.response?.data?.message || error.message;
-        console.error("API 호출 에러:", errorMessage);
-        setTrivia(`데이터 로딩 실패: ${errorMessage}`);
-      } else {
-        // 알 수 없는 자바스크립트 에러
-        console.error("알 수 없는 에러:", error);
-        setTrivia("서버와 통신할 수 없습니다. 백엔드 상태를 확인해 주세요.");
+    } catch (err) {
+      if (isAxiosError(err)) {
+        const msg = err.response?.data?.message || '잡지식을 불러오지 못했어요.';
+        setDrawError(msg);
+        showToast(msg, 'error');
       }
+    } finally {
+      setIsFetching(false);
     }
-  }, []);
+  }, [isFetching, showToast]);
 
-  // 3. 컴포넌트 마운트 시 최초 로그인 상태 확인
-  useEffect(() => {
-    // 최초 마운트 시, isLoggedIn() 결과로 logged 상태를 다시 한 번 정확히 설정
-    setLogged(isLoggedIn());
-    // (선택 사항) 로그인 여부에 관계없이 잡지식 로딩이 필요하다면 여기서 fetchTrivia() 호출
-  }, []);
-
-  const handleRefreshClick = () => {
-    fetchTrivia();
-  };
-
-  const handleQuizClick = () => {
-    navigate("/quiz");
+  const cardContent = () => {
+    if (isFetching) {
+      return (
+        <KnowledgeCard $loading>
+          <LoadingPlaceholder>{GLITCH_STRINGS[glitchIdx]}</LoadingPlaceholder>
+        </KnowledgeCard>
+      );
+    }
+    if (drawError) {
+      return (
+        <KnowledgeCard>
+          <LoadingPlaceholder style={{ color: 'var(--dt-danger)' }}>◈ 통신 오류 발생</LoadingPlaceholder>
+          <KnowledgeTitle style={{ textAlign: 'center', fontSize: 'var(--dt-size-base)' }}>{drawError}</KnowledgeTitle>
+          <div style={{ display: 'flex', gap: 'var(--dt-space-2)', marginTop: 'var(--dt-space-4)' }}>
+            <SecondaryButton onClick={() => setDrawError(null)} style={{ flex: 1 }}>뒤로 가기</SecondaryButton>
+            <PrimaryButton onClick={fetchDummy} style={{ flex: 1 }}>다시 시도</PrimaryButton>
+          </div>
+        </KnowledgeCard>
+      );
+    }
+    if (dummy) {
+      const rarity = dummy.rarityName || 'COMMON';
+      return (
+        <KnowledgeCard $rarity={rarity as RarityName}>
+          <RarityBadge $rarity={rarity as RarityName}>
+            ◈ {RARITY_LABELS[rarity] || rarity}
+          </RarityBadge>
+          <KnowledgeTitle>{dummy.title || '제목 없음'}</KnowledgeTitle>
+          <TypingText text={dummy.content || ''} speed={30} />
+        </KnowledgeCard>
+      );
+    }
+    return (
+      <KnowledgeCard>
+        <LoadingPlaceholder>◈ 버튼을 눌러 잡지식을 뽑아보세요</LoadingPlaceholder>
+      </KnowledgeCard>
+    );
   };
 
   return (
     <>
-
-      {/* 팝업 조건부 렌더링 */}
       {showModal && (
         <IntroModal
-          onClose={handleModalClose}
-          // ⭐️ 로고 이미지 경로 설정: public 폴더에 favicon.jpg나 favicon.svg가 있다면 사용
-          imageSrc="../../public/favicon.jpg"
+          onClose={() => setShowModal(false)}
+          imageSrc="/favicon.jpg"
         />
       )}
-      {/* 4. Header에 logged 상태와 로그아웃 핸들러를 전달 */}
       <Header isLoggedIn={logged} onLogout={handleLogoutSuccess} />
-      <MainContainer>
-        {/* <TriviaText>{trivia}</TriviaText> */}
-        <TriviaText>
-          <TypingText text={trivia} speed={40} />
-        </TriviaText>
-        <ButtonGroup>
-          <ActionButton onClick={handleRefreshClick}>
-            ✨ 잡지식 새로고침
-          </ActionButton>
-          <ActionButton onClick={handleQuizClick}>
-            🧠 퀴즈 풀기!
-          </ActionButton>
-        </ButtonGroup>
-      </MainContainer>
+      <Page>
+        <Content>
+          <Greeting>
+            <GreetingName>
+              {username ? `◈ ${username}` : '◈ GHOST NETWORK'}
+            </GreetingName>
+            <GreetingTitle>
+              {username ? `안녕하세요, ${username}님` : '안녕하세요, 처음 뵙겠습니다'}
+            </GreetingTitle>
+          </Greeting>
+
+          {cardContent()}
+
+          <ButtonRow>
+            <PrimaryButton onClick={fetchDummy} disabled={isFetching}>
+              {isFetching ? '수신 중...' : '✦ 잡지식 뽑기'}
+            </PrimaryButton>
+            <SecondaryButton onClick={() => navigate('/quiz')}>
+              ◈ 퀴즈 도전
+            </SecondaryButton>
+          </ButtonRow>
+        </Content>
+      </Page>
     </>
   );
 };

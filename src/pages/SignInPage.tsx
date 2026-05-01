@@ -1,202 +1,434 @@
-// pages/SignInPage.tsx
 import React, { useState } from 'react';
-import { useNavigate, Link  } from 'react-router-dom';
-import styled from 'styled-components';
-import axios from 'axios';
-import type { APIResponse, SignInRequestDTO, VerificationRequestDTO } from '../types/api.tsx';
+import { useNavigate, Link } from 'react-router-dom';
+import styled, { keyframes } from 'styled-components';
+import { isAxiosError } from 'axios';
+import api from '../api/axiosInstance';
+import { useToast } from '../components/Toast';
+import type { APIResponse, SignInRequestDTO, VerificationRequestDTO } from '../types/api';
 
-// (Styled Components는 LoginPage.tsx의 AuthContainer, Card, Input, AuthButton, ErrorMessage 재활용)
-const AuthContainer = styled.div`
-  background-color: #333446; /* 메인 색상 */
-  
-  /* 뷰포트 전체 높이를 채우도록 설정 */
-  min-height: 100vh; 
-  /* 뷰포트 전체 너비를 채우도록 설정 */
-  width: 100vw; 
-
-  /* 중앙 정렬 */
-  display: flex;
-  flex-direction: column;
-  align-items: center; /* 수평 중앙 정렬 */
-  justify-content: center; /* 수직 중앙 정렬 */
-  text-align: center;
-
-  /* Header가 없으므로 상단에 약간의 패딩 추가 (선택 사항) */
-  padding-top: 50px; 
+// ── Animations ───────────────────────────────────────────────
+const fadeRise = keyframes`
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
 `;
 
-const Card = styled.div`
-  background-color: #B8CFCE; /* 서브 색상 2로 카드 배경 */
-  padding: 40px;
-  border-radius: 10px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  width: 300px;
+const slideDown = keyframes`
+  from { opacity: 0; max-height: 0; transform: translateY(-10px); }
+  to   { opacity: 1; max-height: 80px; transform: translateY(0); }
+`;
+
+const spin = keyframes`
+  to { transform: rotate(360deg); }
+`;
+
+// ── Shared Styled Components ─────────────────────────────────
+const LoadingSpinner = styled.div`
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--dt-stroke-soft);
+  border-top-color: var(--dt-accent);
+  border-radius: 50%;
+  animation: ${spin} 0.8s linear infinite;
+`;
+
+const InputWrapper = styled.div`
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+`;
+
+const SpinnerOverlay = styled.div`
+  position: absolute;
+  right: var(--dt-space-3);
+  display: flex;
+  align-items: center;
+  gap: var(--dt-space-2);
+  color: var(--dt-fg-tertiary);
+  font-size: var(--dt-size-xs);
+`;
+const Page = styled.div`
+  min-height: 100vh;
+  width: 100%;
+  background: var(--dt-bg-base);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--dt-space-6);
+  box-sizing: border-box;
+`;
+
+const Card = styled.form`
+  width: 100%;
+  max-width: 360px;
+  background: var(--dt-bg-surface);
+  border: 1px solid var(--dt-stroke-soft);
+  border-radius: var(--dt-radius-xl);
+  padding: var(--dt-space-10) var(--dt-space-8);
+  box-shadow: var(--dt-shadow-lg), var(--dt-inset-highlight);
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: var(--dt-space-4);
+  animation: ${fadeRise} var(--dt-dur-rise) var(--dt-ease-rise) both;
+`;
+
+const CardLabel = styled.p`
+  font-family: var(--dt-font-mono);
+  font-size: var(--dt-size-xs);
+  letter-spacing: var(--dt-tracking-glitch);
+  text-transform: uppercase;
+  color: var(--dt-lavender-300);
+  margin: 0;
+  text-align: center;
+`;
+
+const CardTitle = styled.h1`
+  font-size: var(--dt-size-2xl);
+  font-weight: var(--dt-weight-bold);
+  letter-spacing: var(--dt-tracking-tight);
+  color: var(--dt-fg-primary);
+  margin: 0 0 var(--dt-space-2);
+  text-align: center;
+`;
+
+const Divider = styled.div`
+  height: 1px;
+  background: var(--dt-stroke-faint);
+  margin: var(--dt-space-2) 0;
 `;
 
 const Input = styled.input`
-  padding: 10px;
-  border: 1px solid #7F8CAA;
-  border-radius: 5px;
-  background-color: #EAEFEF;
-  color: #333446;
+  width: 100%;
+  background: var(--dt-bg-elevated);
+  border: 1px solid var(--dt-stroke-soft);
+  border-radius: var(--dt-radius-md);
+  padding: var(--dt-space-3) var(--dt-space-4);
+  box-sizing: border-box;
+
+  color: var(--dt-fg-primary);
+  font-family: var(--dt-font-sans);
+  font-size: var(--dt-size-base);
+  outline: none;
+  transition: border-color var(--dt-dur-base) var(--dt-ease-snap);
+
+  &::placeholder {
+    color: var(--dt-fg-disabled);
+  }
+
+  &:focus {
+    border-color: var(--dt-stroke-accent);
+    box-shadow: 0 0 0 3px rgba(154, 123, 240, 0.12);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 `;
 
-const AuthButton = styled.button`
-  background-color: #7F8CAA;
-  color: #EAEFEF;
-  padding: 10px;
-  border: none;
-  border-radius: 5px;
+const Row = styled.div`
+  display: flex;
+  gap: var(--dt-space-2);
+  align-items: stretch;
+`;
+
+const ActionButton = styled.button`
+  flex-shrink: 0;
+  background: var(--dt-bg-elevated);
+  border: 1px solid var(--dt-stroke-accent);
+  border-radius: var(--dt-radius-md);
+  padding: var(--dt-space-3) var(--dt-space-4);
+
+  color: var(--dt-accent);
+  font-family: var(--dt-font-sans);
+  font-size: var(--dt-size-sm);
+  font-weight: var(--dt-weight-medium);
+  white-space: nowrap;
   cursor: pointer;
-  &:hover { background-color: #B8CFCE; color: #333446; }
+  transition: all var(--dt-dur-base) var(--dt-ease-snap);
+
+  &:hover:not(:disabled) {
+    background: var(--dt-accent-soft);
+    box-shadow: var(--dt-glow-soft);
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
 `;
 
-const ErrorMessage = styled.p`
-  color: #ff5555;
-  font-size: 0.9em;
+const AnimatedRow = styled(Row)`
+  animation: ${slideDown} 0.4s var(--dt-ease-rise) forwards;
+  overflow: hidden;
+`;
+
+const SubmitButton = styled.button`
+  width: 100%;
+  background: var(--dt-accent);
+  border: none;
+  border-radius: var(--dt-radius-md);
+  padding: var(--dt-space-4);
+  margin-top: var(--dt-space-2);
+
+  color: var(--dt-fg-on-accent);
+  font-family: var(--dt-font-sans);
+  font-size: var(--dt-size-md);
+  font-weight: var(--dt-weight-semibold);
+  cursor: pointer;
+  transition: all var(--dt-dur-base) var(--dt-ease-snap);
+
+  &:hover:not(:disabled) {
+    box-shadow: var(--dt-glow-bloom);
+    transform: translateY(-1px);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+`;
+
+const StatusMsg = styled.p<{ $isError?: boolean }>`
+  font-size: var(--dt-size-sm);
+  color: ${({ $isError }) =>
+    $isError ? 'var(--dt-danger)' : 'var(--dt-success)'};
+  margin: 0;
   text-align: center;
+  line-height: var(--dt-leading-snug);
 `;
 
+const VerifiedBadge = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--dt-space-2);
+  padding: var(--dt-space-3) var(--dt-space-4);
+  background: rgba(111, 217, 168, 0.08);
+  border: 1px solid rgba(111, 217, 168, 0.25);
+  border-radius: var(--dt-radius-md);
 
+  font-size: var(--dt-size-sm);
+  font-weight: var(--dt-weight-medium);
+  color: var(--dt-success);
+`;
+
+const FooterLink = styled(Link)`
+  font-size: var(--dt-size-sm);
+  color: var(--dt-fg-tertiary);
+  text-align: center;
+  text-decoration: none;
+  transition: color var(--dt-dur-base) var(--dt-ease-snap);
+
+  &:hover {
+    color: var(--dt-accent);
+  }
+`;
+
+// ── Component ────────────────────────────────────────────────
 const SignInPage: React.FC = () => {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
-  
+
   const [isEmailSent, setIsEmailSent] = useState(false);
+  const [isEmailSending, setIsEmailSending] = useState(false);
   const [isEmailVerified, setIsEmailVerified] = useState(false);
   const [message, setMessage] = useState('');
-  const navigate = useNavigate();
+  const [isMessageError, setIsMessageError] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  // 1. 이메일 인증 요청 (GET /api/users/email-verification)
+  const navigate = useNavigate();
+  const { showToast } = useToast();
+
   const requestEmailVerification = async () => {
     if (!email) {
       setMessage('이메일을 입력해주세요.');
+      setIsMessageError(true);
       return;
     }
     setMessage('');
+    setIsEmailSending(true);
+    // 즉시 입력 칸을 보여주기 위해 상태 업데이트 (JSX에서 isEmailSending || isEmailSent 로 처리)
+    
     try {
-      // NOTE: Query Parameter 사용
-      await axios.get(`/api/users/email-verification?email=${email}`);
-      setIsEmailSent(true);
-      setMessage('인증 코드가 이메일로 발송되었습니다. 확인 후 입력해주세요.');
+      const res = await api.get<APIResponse<boolean>>(
+        '/api/members/email-verification',
+        { params: { email } }
+      );
+      
+      const resData = res.data;
+      // 보다 명확한 성공 판정: isSuccess가 true이거나 특정 성공 코드가 온 경우
+      const isSuccess = resData.isSuccess === true || resData.code === 'MEMBER2004' || (resData as any).success === true;
+
+      if (isSuccess) {
+        setIsEmailSent(true);
+        setMessage(resData.message || '인증 코드가 발송되었습니다. 이메일을 확인해주세요.');
+        setIsMessageError(false);
+      } else {
+        // 실패 시에도 입력 칸은 유지하되 에러 메시지 표시
+        setMessage(resData.message || '이메일 발송에 실패했습니다.');
+        setIsMessageError(true);
+      }
     } catch (err) {
-      setMessage('이메일 발송에 실패했습니다. 이메일을 다시 확인해주세요.');
+      const msg = isAxiosError(err)
+        ? err.response?.data?.message || '이메일 발송에 실패했습니다.'
+        : '이메일 발송에 실패했습니다.';
+      setMessage(msg);
+      setIsMessageError(true);
+    } finally {
+      setIsEmailSending(false);
     }
   };
 
-  // 2. 인증 코드 확인 (POST /api/users/verify)
   const verifyCode = async () => {
     if (!verificationCode) {
       setMessage('인증 코드를 입력해주세요.');
+      setIsMessageError(true);
       return;
     }
     setMessage('');
 
-    const requestBody: VerificationRequestDTO = { email, code: verificationCode };
-
+    const body: VerificationRequestDTO = { email, code: verificationCode };
     try {
-      const response = await axios.post<APIResponse<boolean>>("/api/users/verify", requestBody);
-      
-      if (response.data.success) {
+      const res = await api.post<APIResponse<boolean>>('/api/members/verify', body);
+      if (res.data.isSuccess || res.data.success || res.data.code === 'MEMBER2005') {
         setIsEmailVerified(true);
-        setMessage('인증 성공!');
+        setMessage('');
+        showToast(res.data.message || '이메일 인증에 성공했습니다.', 'success');
       } else {
-        // 서버에서 '제가 보낸 이메일이랑...' 메세지를 응답 메시지(message) 필드에 담아줘야 합니다.
-        setMessage(response.data.message || '인증 코드 확인에 실패했습니다. 다시 확인해주세요.');
+        setMessage(res.data.message || '인증에 실패했습니다.');
+        setIsMessageError(true);
       }
     } catch (err) {
-      setMessage('인증 코드 확인 중 문제가 발생했습니다.');
-      console.error(err);
+      const msg = isAxiosError(err)
+        ? err.response?.data?.message || '인증 코드 확인 중 문제가 발생했습니다.'
+        : '인증 코드 확인 중 문제가 발생했습니다.';
+      setMessage(msg);
+      setIsMessageError(true);
     }
   };
 
-  // 3. 최종 회원가입 (POST /api/users/sign-in)
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isEmailVerified) {
+      setMessage('이메일 인증을 완료해주세요.');
+      setIsMessageError(true);
+      return;
+    }
     setMessage('');
+    setIsLoading(true);
 
-    const requestBody: SignInRequestDTO = { username, email, password };
-    
+    const body: SignInRequestDTO = { username, email, password };
     try {
-      const response = await axios.post<APIResponse<boolean>>("/api/users/sign-in", requestBody);
-      
-      if (response.data.success) {
-        alert('회원가입에 성공했습니다! 로그인 페이지로 이동합니다.');
-        navigate("/login"); 
+      const res = await api.post<APIResponse<boolean>>('/api/members/sign-in', body);
+      if (res.data.isSuccess || res.data.success || res.data.code === 'MEMBER2003') {
+        showToast(res.data.message || '회원가입에 성공했습니다!', 'success');
+        navigate('/login');
       } else {
-        setMessage(response.data.message || '회원가입에 실패했습니다.');
+        setMessage(res.data.message || '회원가입에 실패했습니다.');
+        setIsMessageError(true);
       }
     } catch (err) {
-      setMessage('회원가입 요청 중 문제가 발생했습니다.');
-      console.error(err);
+      const msg = isAxiosError(err)
+        ? err.response?.data?.message || '회원가입 요청 중 문제가 발생했습니다.'
+        : '회원가입 요청 중 문제가 발생했습니다.';
+      setMessage(msg);
+      setIsMessageError(true);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <AuthContainer>
-      <Card as="form" onSubmit={handleSignIn}>
-        <h2>회원가입</h2>
-        
-        
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <Input 
-            type="email" 
-            placeholder="사용자 이메일" 
-            value={email} 
-            onChange={(e) => setEmail(e.target.value)} 
-            required 
+    <Page>
+      <Card onSubmit={handleSignIn}>
+        <CardLabel>◈ NEW MEMBER</CardLabel>
+        <CardTitle>회원가입</CardTitle>
+        <Divider />
+
+        {/* 이메일 + 인증 버튼 */}
+        <Row>
+          <Input
+            type="email"
+            placeholder="이메일"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
             disabled={isEmailVerified}
+            style={{ flex: 1 }}
           />
-          <AuthButton type="button" onClick={requestEmailVerification} disabled={isEmailVerified || isEmailSent}>
-            이메일 인증
-          </AuthButton>
-        </div>
-        <Input type="password" placeholder="패스워드" value={password} onChange={(e) => setPassword(e.target.value)} required />
-        <Input type="text" placeholder="사용자 닉네임" value={username} onChange={(e) => setUsername(e.target.value)} required />
-        
-        {/* 이메일 입력 및 인증 요청 */}
-        
+          <ActionButton
+            type="button"
+            onClick={requestEmailVerification}
+            disabled={isEmailVerified || isEmailSent || isEmailSending}
+          >
+            {isEmailSending ? '발송 중...' : '인증 코드 발송'}
+          </ActionButton>
+        </Row>
 
-        {/* 인증 코드 입력 (동적으로 띄움) */}
-        {isEmailSent && !isEmailVerified && (
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <Input 
-              type="text" 
-              placeholder="인증 코드 입력" 
-              value={verificationCode} 
-              onChange={(e) => setVerificationCode(e.target.value)} 
-              required
-            />
-            <AuthButton type="button" onClick={verifyCode}>
-              인증
-            </AuthButton>
-          </div>
+        {/* 인증 코드 입력 (이메일 발송 중이거나 발송 후) */}
+        {(isEmailSending || isEmailSent) && !isEmailVerified && (
+          <AnimatedRow>
+            <InputWrapper>
+              <Input
+                type="text"
+                placeholder="인증 코드 6자리"
+                value={verificationCode}
+                onChange={(e) => setVerificationCode(e.target.value)}
+                disabled={isEmailSending}
+                style={{ flex: 1 }}
+              />
+              {isEmailSending && (
+                <SpinnerOverlay>
+                  <LoadingSpinner />
+                </SpinnerOverlay>
+              )}
+            </InputWrapper>
+            <ActionButton 
+              type="button" 
+              onClick={verifyCode}
+              disabled={isEmailSending}
+            >
+              확인
+            </ActionButton>
+          </AnimatedRow>
         )}
 
-        {/* 인증 성공 시 버튼 내용 변경 */}
+        {/* 인증 완료 뱃지 */}
         {isEmailVerified && (
-            <AuthButton type="button" disabled style={{ backgroundColor: '#B8CFCE', color: '#333446' }}>
-                인증 성공!
-            </AuthButton>
+          <VerifiedBadge>✓ 이메일 인증 완료</VerifiedBadge>
         )}
 
-        {message && <ErrorMessage>{message}</ErrorMessage>}
+        <Input
+          type="password"
+          placeholder="비밀번호"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
+        <Input
+          type="text"
+          placeholder="닉네임"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          required
+        />
 
-        {/* 최종 회원가입 버튼 (인증 성공 시 동적으로 띄움) */}
+        {message && (
+          <StatusMsg $isError={isMessageError}>{message}</StatusMsg>
+        )}
+
         {isEmailVerified && (
-          <AuthButton type="submit">회원가입 하기</AuthButton>
+          <SubmitButton type="submit" disabled={isLoading}>
+            {isLoading ? '처리 중...' : '회원가입 하기'}
+          </SubmitButton>
         )}
-        <Link to="/" style={{ textAlign: 'center', fontSize: '0.9em', color: '#333446', marginTop: '10px' }}>
-          메인 페이지로 돌아가기
-        </Link>
 
+        <FooterLink to="/login">이미 계정이 있으신가요? 로그인</FooterLink>
       </Card>
-    </AuthContainer>
+    </Page>
   );
 };
 

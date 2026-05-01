@@ -1,24 +1,28 @@
-// App.tsx
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { ToastProvider } from './components/Toast';
 import MainPage from './pages/MainPage';
-// import QuizPage from './pages/QuizPage';
-// import MyPage from '../pages/MyPage';
-import LoginPage from './pages/LoginPage'; // 로그인 페이지 import
-import SignInPage from './pages/SignInPage'; // 회원가입 페이지 import
-import QuizPage from './pages/QuizPage'; 
-// import MyPage from './pages/MyPage';
+import LoginPage from './pages/LoginPage';
+import SignInPage from './pages/SignInPage';
+import QuizPage from './pages/QuizPage';
+import MyPage from './pages/MyPage';
+import ErrorPage from './pages/ErrorPage';
 
 function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<MainPage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/sign-in" element={<SignInPage />} />
-        <Route path="/quiz" element={<QuizPage />} />
-        {/* <Route path="/my-page" element={<MyPage />} /> */}
-      </Routes>
-    </Router>
+    <ToastProvider>
+      <Router>
+        <Routes>
+          <Route path="/" element={<MainPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/sign-in" element={<SignInPage />} />
+          <Route path="/quiz" element={<QuizPage />} />
+          <Route path="/my-page" element={<MyPage />} />
+          <Route path="/error" element={<ErrorPage />} />
+          {/* Catch-all route for undefined paths */}
+          <Route path="*" element={<ErrorPage />} />
+        </Routes>
+      </Router>
+    </ToastProvider>
   );
 }
 

@@ -20,9 +20,16 @@ const api: AxiosInstance = axios.create({
 api.interceptors.request.use(
   (config) => {
     const token = getAccessToken(); // LocalStorage에서 순수 토큰 값 가져오기
+    const url = config.url || '';
 
-    if (token) {
-      // ⭐️ 백엔드 필터 수정사항 적용: 표준 형식 'Bearer: '
+    // 로그인 및 회원가입 관련 API는 Authorization 헤더를 보내지 않음
+    const isAuthPath = url.includes('/login') || 
+                       url.includes('/sign-in') || 
+                       url.includes('/email-verification') || 
+                       url.includes('/verify');
+
+    if (token && !isAuthPath) {
+      // ⭐️ 백엔드 필터 수정사항 적용: 'Bearer: ' 형식
       config.headers.Authorization = `Bearer: ${token}`; 
     }
     return config;
