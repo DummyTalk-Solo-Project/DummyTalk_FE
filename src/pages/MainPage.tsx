@@ -221,7 +221,8 @@ const RemainingCount = styled.p`
   letter-spacing: var(--dt-tracking-glitch);
 `;
 
-const PITY_MESSAGES: Partial<Record<RarityName, string>> = {
+// isNextPityTriggered: 다음 뽑기에서 천장 확정 → 다음 등급 예고
+const NEXT_PITY_MESSAGES: Partial<Record<RarityName, string>> = {
   COMMON:  '다음은 무조건 RARE 더미가 나와요!',
   RARE:    '다음은 무조건 EPIC 더미가 나와요!',
   EPIC:    '다음은 무조건 SPECIAL 더미가 나와요!',
@@ -233,6 +234,23 @@ const NEXT_RARITY: Record<RarityName, RarityName | null> = {
   EPIC:    'SPECIAL',
   SPECIAL: null,
 };
+
+// isPityTriggered: 이번 뽑기가 천장 발동 → 카드 상단에 천장 발동 배지 표시
+const PityTriggeredBadge = styled.span<{ $rarity: RarityName }>`
+  display: inline-flex;
+  align-items: center;
+  gap: var(--dt-space-1);
+  padding: 2px var(--dt-space-2);
+  border-radius: var(--dt-radius-pill);
+  background: ${({ $rarity }) => `${RARITY_COLORS[$rarity]}25`};
+  border: 1px solid ${({ $rarity }) => `${RARITY_COLORS[$rarity]}60`};
+  color: ${({ $rarity }) => RARITY_COLORS[$rarity]};
+  font-family: var(--dt-font-mono);
+  font-size: var(--dt-size-xs);
+  font-weight: var(--dt-weight-bold);
+  letter-spacing: var(--dt-tracking-glitch);
+  align-self: flex-start;
+`;
 
 // ── Glitch strings for loading ───────────────────────────────
 const GLITCH_STRINGS = [
@@ -320,18 +338,24 @@ const MainPage: React.FC = () => {
     }
     if (dummy) {
       const rarity = dummy.rarityName || 'COMMON';
-      const isPity = dummy.currentDummyGradeStack === 10 && rarity !== 'SPECIAL';
-      const nextRarity = isPity ? NEXT_RARITY[rarity as RarityName] : null;
+      const nextRarity = NEXT_RARITY[rarity as RarityName];
       return (
         <KnowledgeCard $rarity={rarity as RarityName}>
-          <RarityBadge $rarity={rarity as RarityName}>
-            ◈ {RARITY_LABELS[rarity] || rarity}
-          </RarityBadge>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--dt-space-2)', flexWrap: 'wrap' }}>
+            <RarityBadge $rarity={rarity as RarityName}>
+              ◈ {RARITY_LABELS[rarity] || rarity}
+            </RarityBadge>
+            {dummy.isPityTriggered && (
+              <PityTriggeredBadge $rarity={rarity as RarityName}>
+                ✦ 천장 발동
+              </PityTriggeredBadge>
+            )}
+          </div>
           <KnowledgeTitle>{dummy.title || '제목 없음'}</KnowledgeTitle>
           <TypingText text={dummy.content || ''} speed={30} />
-          {isPity && nextRarity && PITY_MESSAGES[rarity as RarityName] && (
+          {dummy.isNextPityTriggered && nextRarity && NEXT_PITY_MESSAGES[rarity as RarityName] && (
             <PityBanner $rarity={nextRarity}>
-              ✦ {PITY_MESSAGES[rarity as RarityName]}
+              ✦ {NEXT_PITY_MESSAGES[rarity as RarityName]}
             </PityBanner>
           )}
         </KnowledgeCard>

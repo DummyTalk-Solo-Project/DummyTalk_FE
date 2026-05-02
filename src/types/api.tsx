@@ -26,7 +26,8 @@ export interface DummyResponseDTO {
   title: string;
   content: string;
   rarityName: RarityName;
-  currentDummyGradeStack: number;
+  isPityTriggered: boolean;     // 이번 뽑기가 천장 발동으로 획득된 경우
+  isNextPityTriggered: boolean; // 다음 뽑기에서 천장 발동 확정인 경우
   remainingCount: number;
 }
 
