@@ -105,6 +105,27 @@ const RetryButton = styled.button`
   }
 `;
 
+const HomeButton = styled.button`
+  background: var(--dt-bg-elevated);
+  border: 1px solid var(--dt-stroke-soft);
+  border-radius: var(--dt-radius-md);
+  padding: var(--dt-space-2) var(--dt-space-4);
+  color: var(--dt-fg-secondary);
+  font-family: var(--dt-font-sans);
+  font-size: var(--dt-size-sm);
+  font-weight: var(--dt-weight-medium);
+  cursor: pointer;
+  transition: all var(--dt-dur-base) var(--dt-ease-snap);
+  align-self: flex-start;
+
+  &:hover {
+    background: var(--dt-bg-surface);
+    color: var(--dt-fg-primary);
+    border-color: var(--dt-stroke-accent);
+    transform: translateX(-2px);
+  }
+`;
+
 // ── Quiz Card ────────────────────────────────────────────────
 const QuizCard = styled.div`
   width: 100%;
@@ -280,14 +301,17 @@ const QuizPage: React.FC = () => {
   }, []);
 
   const handleSubmit = useCallback(async () => {
-    if (selectedIndex === null || !quizData?.quizId) return;
+    if (selectedIndex === null || quizData == null) return;
+
+    // BE 필드명 id / quizId 혼용 대비
+    const quizId = quizData.id ?? quizData.quizId;
+    // BE answer는 1-indexed (1~4)
+    const answer = selectedIndex + 1;
 
     setIsSubmitting(true);
     try {
       const res: AxiosResponse<APIResponse<boolean>> = await api.post(
-        '/api/dummies/quiz',
-        null,
-        { params: { id: quizData.quizId, answer: selectedIndex + 1 } }
+        `/api/dummies/quiz?id=${quizId}&answer=${answer}`
       );
       if (res.data.isSuccess || res.data.success) {
         showToast(res.data.message || '퀴즈 풀이에 성공했어요!', 'success');
@@ -301,9 +325,17 @@ const QuizPage: React.FC = () => {
         const msg =
           err.response?.data?.message || '정답 제출 중 오류가 발생했어요.';
 
-        if (code === 'DUMMY4006' || code === 'DUMMY4007') {
-          // 이미 제출했거나 티켓 소진 → 홈으로
-          showToast(msg, code === 'DUMMY4007' ? 'info' : 'error');
+        if (code === 'QUIZ4007') {
+          // 퀴즈가 풀다가 닫힌 경우
+          showToast(msg, 'error');
+          navigate('/');
+        } else if (code === 'DUMMY4006') {
+          // 이미 제출한 경우
+          showToast(msg, 'error');
+          navigate('/');
+        } else if (code === 'DUMMY4007') {
+          // 티켓 소진
+          showToast(msg, 'info');
           navigate('/');
         } else {
           // DUMMY4005 오답 등 → 페이지에서 재시도 허용
@@ -326,6 +358,7 @@ const QuizPage: React.FC = () => {
     return (
       <PageContainer>
         <Content>
+          <HomeButton onClick={() => navigate('/')}>← 홈으로</HomeButton>
           <GhostEmoji>👻</GhostEmoji>
           <GlitchLabel>{glitchText}</GlitchLabel>
         </Content>
@@ -338,13 +371,11 @@ const QuizPage: React.FC = () => {
     return (
       <PageContainer>
         <Content>
+          <HomeButton onClick={() => navigate('/')}>← 홈으로</HomeButton>
           <GhostEmoji>😵</GhostEmoji>
           <StateTitle>신호가 끊겼어요</StateTitle>
           <StateSubtitle>{error}</StateSubtitle>
-          <div style={{ display: 'flex', gap: 'var(--dt-space-3)', marginTop: 'var(--dt-space-2)' }}>
-            <RetryButton onClick={() => navigate(-1)}>뒤로 가기</RetryButton>
-            <RetryButton onClick={fetchQuiz} style={{ borderColor: 'var(--dt-accent)', background: 'var(--dt-accent-soft)', color: 'var(--dt-fg-primary)' }}>다시 시도</RetryButton>
-          </div>
+          <RetryButton onClick={fetchQuiz}>다시 시도</RetryButton>
         </Content>
       </PageContainer>
     );
@@ -355,12 +386,12 @@ const QuizPage: React.FC = () => {
     return (
       <PageContainer>
         <Content>
+          <HomeButton onClick={() => navigate('/')}>← 홈으로</HomeButton>
           <GhostEmoji>😴</GhostEmoji>
           <StateTitle>아직 퀴즈 신호가 없어요</StateTitle>
           <StateSubtitle>
             유령이 문제를 준비 중이에요.{'\n'}조금만 더 기다려 주세요.
           </StateSubtitle>
-          <RetryButton onClick={() => navigate(-1)}>뒤로 가기</RetryButton>
         </Content>
       </PageContainer>
     );
@@ -371,10 +402,10 @@ const QuizPage: React.FC = () => {
     return (
       <PageContainer>
         <Content>
+          <HomeButton onClick={() => navigate('/')}>← 홈으로</HomeButton>
           <GhostEmoji>🌀</GhostEmoji>
           <StateTitle>퀴즈 정보를 찾을 수 없어요</StateTitle>
           <StateSubtitle>잠시 후 다시 시도해 주세요.</StateSubtitle>
-          <RetryButton onClick={() => navigate(-1)}>뒤로 가기</RetryButton>
         </Content>
       </PageContainer>
     );
@@ -388,6 +419,7 @@ const QuizPage: React.FC = () => {
     return (
       <PageContainer>
         <Content>
+          <HomeButton onClick={() => navigate('/')}>← 홈으로</HomeButton>
           <GhostEmoji>⏳</GhostEmoji>
           <StateTitle>퀴즈 오픈 대기 중이에요</StateTitle>
           <StateSubtitle>곧 시작해요. 놓치지 마세요!</StateSubtitle>
@@ -401,6 +433,7 @@ const QuizPage: React.FC = () => {
     return (
       <PageContainer>
         <Content>
+          <HomeButton onClick={() => navigate('/')}>← 홈으로</HomeButton>
           <GhostEmoji>🏁</GhostEmoji>
           <StateTitle>퀴즈가 종료되었어요</StateTitle>
           <StateSubtitle>다음 퀴즈를 기대해 주세요.</StateSubtitle>
@@ -413,6 +446,7 @@ const QuizPage: React.FC = () => {
   return (
     <PageContainer>
       <Content>
+        <HomeButton onClick={() => navigate('/')}>← 홈으로</HomeButton>
         <QuizCard>
           <QuizLabel>◈ QUIZ TRANSMISSION</QuizLabel>
           <QuizTitle>{title || '질문이 없습니다.'}</QuizTitle>

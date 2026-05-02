@@ -13,7 +13,8 @@ export type QuizStatus = 'NOT_OPEN' | 'OPEN' | 'CLOSE';
 export interface QuizResponseDTO {
   status: QuizStatus;
   userGrade: number | null; // BE: 미구현, 항상 null
-  quizId: number;
+  id: number;       // BE 실제 필드명
+  quizId?: number;  // 혼용 대비
   title: string;
   answerList: string[];
 }
