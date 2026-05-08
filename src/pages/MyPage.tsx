@@ -7,7 +7,7 @@ import api from '../api/axiosInstance';
 import type { APIResponse, MyPageDTO } from '../types/api';
 import { useToast } from '../components/Toast';
 import Header from '../components/Header';
-import { isLoggedIn } from '../utils/auth';
+import { isLoggedIn, removeAccessToken } from '../utils/auth';
 
 const fadeRise = keyframes`
   from { opacity: 0; transform: translateY(12px); }
@@ -159,9 +159,102 @@ const Badge = styled.span<{ $active: boolean }>`
   border: 1px solid ${({ $active }) => $active ? 'rgba(111, 217, 168, 0.3)' : 'var(--dt-stroke-soft)'};
 `;
 
+const ActionRow = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: var(--dt-space-3);
+  padding-top: var(--dt-space-2);
+`;
+
+const ActionButton = styled.button<{ $variant?: 'accent' | 'danger' | 'secondary' }>`
+  width: 100%;
+  padding: var(--dt-space-3) var(--dt-space-4);
+  border-radius: var(--dt-radius-md);
+  font-size: var(--dt-size-base);
+  font-weight: var(--dt-weight-medium);
+  cursor: pointer;
+  transition: all var(--dt-dur-base) var(--dt-ease-snap);
+  text-align: left;
+
+  ${({ $variant }) => {
+    if ($variant === 'accent') return `
+      background: var(--dt-accent-soft);
+      border: 1px solid var(--dt-stroke-accent);
+      color: var(--dt-fg-primary);
+      &:hover { background: var(--dt-lavender-700); }
+    `;
+    if ($variant === 'danger') return `
+      background: rgba(224, 122, 142, 0.08);
+      border: 1px solid rgba(224, 122, 142, 0.25);
+      color: var(--dt-danger);
+      &:hover { background: rgba(224, 122, 142, 0.15); border-color: var(--dt-danger); }
+    `;
+    return `
+      background: var(--dt-bg-elevated);
+      border: 1px solid var(--dt-stroke-soft);
+      color: var(--dt-fg-secondary);
+      &:hover { background: var(--dt-bg-surface); color: var(--dt-fg-primary); border-color: var(--dt-stroke-strong); }
+    `;
+  }}
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+`;
+
+const ConfirmBox = styled.div`
+  background: rgba(224, 122, 142, 0.08);
+  border: 1px solid rgba(224, 122, 142, 0.25);
+  border-radius: var(--dt-radius-md);
+  padding: var(--dt-space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--dt-space-3);
+`;
+
+const ConfirmMessage = styled.p`
+  font-size: var(--dt-size-sm);
+  color: var(--dt-danger);
+  margin: 0;
+  line-height: var(--dt-leading-relaxed);
+`;
+
+const ConfirmButtons = styled.div`
+  display: flex;
+  gap: var(--dt-space-3);
+`;
+
+const ConfirmBtn = styled.button<{ $confirm?: boolean }>`
+  flex: 1;
+  padding: var(--dt-space-2) var(--dt-space-3);
+  border-radius: var(--dt-radius-sm);
+  font-size: var(--dt-size-sm);
+  font-weight: var(--dt-weight-medium);
+  cursor: pointer;
+  transition: all var(--dt-dur-base) var(--dt-ease-snap);
+
+  ${({ $confirm }) => $confirm ? `
+    background: var(--dt-danger);
+    border: 1px solid var(--dt-danger);
+    color: var(--dt-fg-on-accent);
+    &:hover { opacity: 0.85; }
+  ` : `
+    background: transparent;
+    border: 1px solid var(--dt-stroke-soft);
+    color: var(--dt-fg-tertiary);
+    &:hover { border-color: var(--dt-stroke-strong); color: var(--dt-fg-secondary); }
+  `}
+
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+`;
+
 const MyPage: React.FC = () => {
   const [userData, setUserData] = useState<MyPageDTO | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSubscribeLoading, setIsSubscribeLoading] = useState(false);
+  const [isWithdrawLoading, setIsWithdrawLoading] = useState(false);
+  const [showWithdrawConfirm, setShowWithdrawConfirm] = useState(false);
   const navigate = useNavigate();
   const { showToast } = useToast();
 
@@ -193,6 +286,51 @@ const MyPage: React.FC = () => {
       setIsLoading(false);
     }
   }, [navigate]);
+
+  const handleSubscribe = async () => {
+    setIsSubscribeLoading(true);
+    try {
+      const res = await api.post<APIResponse<boolean>>('/api/members/subscribe');
+      const resData = res.data;
+      const isSuccess = resData.isSuccess || resData.code === 'MEMBER2008';
+      if (isSuccess) {
+        showToast(resData.message || '구독 요청에 성공했습니다.', 'success');
+        fetchMyPage();
+      } else {
+        showToast(resData.message || '구독 요청에 실패했습니다.', 'error');
+      }
+    } catch (err) {
+      if (isAxiosError(err)) {
+        showToast(err.response?.data?.message || '구독 요청에 실패했습니다.', 'error');
+      }
+    } finally {
+      setIsSubscribeLoading(false);
+    }
+  };
+
+  const handleWithdraw = async () => {
+    setIsWithdrawLoading(true);
+    try {
+      const res = await api.patch<APIResponse<boolean>>('/api/members/withdrawal');
+      const resData = res.data;
+      const isSuccess = resData.isSuccess || resData.code === 'MEMBER2006';
+      if (isSuccess) {
+        showToast('탈퇴가 완료되었습니다. 이용해주셔서 감사합니다.', 'info');
+        removeAccessToken();
+        navigate('/');
+      } else {
+        showToast(resData.message || '탈퇴 처리에 실패했습니다.', 'error');
+        setShowWithdrawConfirm(false);
+      }
+    } catch (err) {
+      if (isAxiosError(err)) {
+        showToast(err.response?.data?.message || '탈퇴 처리에 실패했습니다.', 'error');
+      }
+      setShowWithdrawConfirm(false);
+    } finally {
+      setIsWithdrawLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (!isLoggedIn()) {
@@ -279,6 +417,42 @@ const MyPage: React.FC = () => {
                 );
               })}
             </InfoRow>
+          </InfoCard>
+
+          <InfoCard>
+            <ActionRow>
+              <ActionButton $variant="secondary" onClick={() => navigate('/my-dummy')}>
+                📚 내 잡지식 보관함 보기
+              </ActionButton>
+              {!userData?.isSubscribe && (
+                <ActionButton
+                  $variant="accent"
+                  onClick={handleSubscribe}
+                  disabled={isSubscribeLoading}
+                >
+                  {isSubscribeLoading ? '처리 중...' : '✦ 구독 신청하기'}
+                </ActionButton>
+              )}
+              {!showWithdrawConfirm ? (
+                <ActionButton $variant="danger" onClick={() => setShowWithdrawConfirm(true)}>
+                  회원 탈퇴
+                </ActionButton>
+              ) : (
+                <ConfirmBox>
+                  <ConfirmMessage>
+                    정말 탈퇴하시겠어요? 모든 잡지식과 천장 스택이 사라져요.
+                  </ConfirmMessage>
+                  <ConfirmButtons>
+                    <ConfirmBtn onClick={() => setShowWithdrawConfirm(false)} disabled={isWithdrawLoading}>
+                      취소
+                    </ConfirmBtn>
+                    <ConfirmBtn $confirm onClick={handleWithdraw} disabled={isWithdrawLoading}>
+                      {isWithdrawLoading ? '처리 중...' : '탈퇴 확인'}
+                    </ConfirmBtn>
+                  </ConfirmButtons>
+                </ConfirmBox>
+              )}
+            </ActionRow>
           </InfoCard>
         </Content>
       </Page>
