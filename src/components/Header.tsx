@@ -95,8 +95,10 @@ const Header: React.FC<HeaderProps> = ({ isLoggedIn, onLogout }) => {
     <Nav>
       <Brand to="/">◈ DUMMYTALK</Brand>
       <NavLinks>
+        <NavLink to="/notices">공지사항</NavLink>
         {isLoggedIn ? (
           <>
+            <NavLink to="/my-dummy">내 더미들</NavLink>
             <NavLink to="/my-page">마이페이지</NavLink>
             <NavButton onClick={handleLogout}>로그아웃</NavButton>
           </>

@@ -159,6 +159,7 @@ const Badge = styled.span<{ $active: boolean }>`
   border: 1px solid ${({ $active }) => $active ? 'rgba(111, 217, 168, 0.3)' : 'var(--dt-stroke-soft)'};
 `;
 
+
 const MyPage: React.FC = () => {
   const [userData, setUserData] = useState<MyPageDTO | null>(null);
   const [isLoading, setIsLoading] = useState(true);

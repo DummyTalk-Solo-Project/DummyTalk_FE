@@ -75,3 +75,60 @@ export interface MyPageDTO {
   rareStack: number;
   epicStack: number;
 }
+
+// ── Notice ─────────────────────────────────────────────────────
+export interface NoticeListItemDTO {
+  id: number;
+  title: string;
+  isPinned: boolean;
+  isPublished: boolean;
+  authorName: string | null;
+  createdAt: string; // ISO 8601
+}
+
+export interface NoticeDetailDTO extends NoticeListItemDTO {
+  content: string;
+  updatedAt: string; // ISO 8601
+}
+
+export interface NoticeWriteRequestDTO {
+  title: string;
+  content: string;
+  isPinned: boolean;
+}
+
+export interface NoticeUpdateRequestDTO {
+  title: string | null;
+  content: string | null;
+  isPinned: boolean | null;
+}
+
+// ── Admin ──────────────────────────────────────────────────────
+export interface SettlementDTO {
+  settlementDate: string; // yyyy-MM-dd
+  totalDummyViews: number;
+  newMemberCount: number;
+  commonCount: number;
+  rareCount: number;
+  epicCount: number;
+  specialCount: number;
+  activeMemberCount: number;
+  activeSubscriberCount: number;
+}
+
+export interface AdminQuizDTO {
+  id: number;
+  title: string;
+  answerList: string[];
+  answer: number;
+  description: string;
+  ticket: number;
+  status: QuizStatus;
+  startTime: string; // ISO 8601
+  endTime: string;   // ISO 8601
+}
+
+export interface SchedulerStatusDTO {
+  activeCount: number;
+  poolSize: number;
+}

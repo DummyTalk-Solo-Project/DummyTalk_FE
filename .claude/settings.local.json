@@ -5,7 +5,9 @@
       "Bash(./node_modules/.bin/tsc --noEmit)",
       "Bash(npm install *)",
       "Bash(node_modules/.bin/tsc --noEmit)",
-      "Bash(node_modules/.bin/vite build *)"
+      "Bash(node_modules/.bin/vite build *)",
+      "PowerShell(Get-ChildItem -Path \"c:\\\\Users\\\\jijys\\\\Desktop\\\\main\\\\Github\\\\DummyTalk_FE\\\\src\" -Recurse | Where-Object { $_.PSIsContainer -eq $false } | ForEach-Object { $_.FullName.Replace\\(\"c:\\\\Users\\\\jijys\\\\Desktop\\\\main\\\\Github\\\\DummyTalk_FE\\\\\", \"\"\\) } | Sort-Object)",
+      "Bash(npm run *)"
     ]
   }
 }

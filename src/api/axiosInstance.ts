@@ -43,20 +43,12 @@ api.interceptors.request.use(
 api.interceptors.response.use(
     (response) => response,
     (error) => {
-        // HTTP 상태 코드 401 (Unauthorized) 체크
         if (error.response?.status === 401) {
-            console.error("Authentication failed (401). JWT may be expired or invalid.");
-            
-            // 로컬 토큰 삭제
             removeAccessToken();
-            
-            // 사용자에게 알림 (선택 사항)
-            alert("세션이 만료되었습니다. 다시 로그인해 주세요.");
-            
-            // 로그인 페이지로 강제 리다이렉트 (⚠️주의: 실제 프로젝트에서는 navigate를 직접 쓰기 어려우므로, 
-            // 별도 상태 관리 툴이나 window.location을 사용하거나 
-            // 컴포넌트 내부에서 에러를 처리하는 것이 더 일반적입니다. 여기서는 일단 로컬 정리만 합니다.)
-            // window.location.href = "/login"; 
+            // 현재 경로가 이미 로그인 페이지가 아닐 때만 리다이렉트
+            if (!window.location.pathname.startsWith('/login')) {
+                window.location.href = '/login';
+            }
         }
         return Promise.reject(error);
     }
