@@ -38,6 +38,14 @@ const RARITY_HEX: Record<RarityName, string> = {
 const getRarityColor = (item: MyDummyItemDTO): string =>
   item.colorCode || RARITY_HEX[item.name] || '#7C7891';
 
+// Per-rarity tint intensity — COMMON is subtle (low tier), EPIC is prominent
+const RARITY_TINT: Record<RarityName, { bg: number; hover: number; badgeBg: number; badgeBorder: number }> = {
+  COMMON:  { bg: 0.05, hover: 0.09, badgeBg: 0.08, badgeBorder: 0.20 },
+  RARE:    { bg: 0.10, hover: 0.18, badgeBg: 0.12, badgeBorder: 0.28 },
+  EPIC:    { bg: 0.22, hover: 0.36, badgeBg: 0.24, badgeBorder: 0.50 },
+  SPECIAL: { bg: 0.14, hover: 0.24, badgeBg: 0.18, badgeBorder: 0.40 },
+};
+
 const formatDate = (iso: string) => {
   const d = new Date(iso);
   return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
@@ -166,10 +174,10 @@ const DummyContent = styled.p`
   transition: max-height 0.5s var(--dt-ease-float);
 `;
 
-const DummyCard = styled.div<{ $color: string }>`
+const DummyCard = styled.div<{ $color: string; $bgAlpha: number; $hoverAlpha: number }>`
   background: linear-gradient(
     135deg,
-    ${({ $color }) => hexToRgba($color, 0.12)} 0%,
+    ${({ $color, $bgAlpha }) => hexToRgba($color, $bgAlpha)} 0%,
     var(--dt-bg-surface) 55%
   );
   border: 1px solid var(--dt-stroke-soft);
@@ -190,11 +198,11 @@ const DummyCard = styled.div<{ $color: string }>`
   &:hover {
     background: linear-gradient(
       135deg,
-      ${({ $color }) => hexToRgba($color, 0.22)} 0%,
+      ${({ $color, $hoverAlpha }) => hexToRgba($color, $hoverAlpha)} 0%,
       var(--dt-bg-elevated) 55%
     );
-    border-color: ${({ $color }) => hexToRgba($color, 0.4)};
-    box-shadow: var(--dt-shadow-md), 0 0 22px ${({ $color }) => hexToRgba($color, 0.3)};
+    border-color: ${({ $color, $hoverAlpha }) => hexToRgba($color, $hoverAlpha * 1.1)};
+    box-shadow: var(--dt-shadow-md), 0 0 22px ${({ $color, $hoverAlpha }) => hexToRgba($color, $hoverAlpha * 1.2)};
     transform: translateY(-2px);
   }
 
@@ -209,14 +217,14 @@ const DummyCardHeader = styled.div`
   gap: var(--dt-space-3);
 `;
 
-const RarityBadge = styled.span<{ $color: string }>`
+const RarityBadge = styled.span<{ $color: string; $badgeBgAlpha: number; $badgeBorderAlpha: number }>`
   font-family: var(--dt-font-mono);
   font-size: var(--dt-size-xs);
   font-weight: var(--dt-weight-bold);
   letter-spacing: var(--dt-tracking-wide);
   color: ${({ $color }) => $color};
-  background: ${({ $color }) => hexToRgba($color, 0.15)};
-  border: 1px solid ${({ $color }) => hexToRgba($color, 0.35)};
+  background: ${({ $color, $badgeBgAlpha }) => hexToRgba($color, $badgeBgAlpha)};
+  border: 1px solid ${({ $color, $badgeBorderAlpha }) => hexToRgba($color, $badgeBorderAlpha)};
   border-radius: var(--dt-radius-pill);
   padding: 2px var(--dt-space-2);
   flex-shrink: 0;
@@ -427,10 +435,22 @@ const MyDummyPage: React.FC = () => {
 
         {items.map((item) => {
           const color = getRarityColor(item);
+          const tint = RARITY_TINT[item.name] ?? RARITY_TINT.COMMON;
           return (
-            <DummyCard key={item.dummyId} $color={color}>
+            <DummyCard
+              key={item.dummyId}
+              $color={color}
+              $bgAlpha={tint.bg}
+              $hoverAlpha={tint.hover}
+            >
               <DummyCardHeader>
-                <RarityBadge $color={color}>{item.name}</RarityBadge>
+                <RarityBadge
+                  $color={color}
+                  $badgeBgAlpha={tint.badgeBg}
+                  $badgeBorderAlpha={tint.badgeBorder}
+                >
+                  {item.name}
+                </RarityBadge>
                 <DummyTitle title={item.title}>{item.title}</DummyTitle>
               </DummyCardHeader>
               <DummyContent>{item.content}</DummyContent>
