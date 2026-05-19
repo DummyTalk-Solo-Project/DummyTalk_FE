@@ -8,7 +8,6 @@ import { useToast } from '../components/Toast';
 import Header from '../components/Header';
 import { isLoggedIn } from '../utils/auth';
 
-// ── Animations ───────────────────────────────────────────────
 const fadeRise = keyframes`
   from { opacity: 0; transform: translateY(12px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -18,7 +17,34 @@ const spinSlow = keyframes`
   to { transform: rotate(360deg); }
 `;
 
+// ── Helpers (defined before styled components that interpolate them) ──
+
+const hexToRgba = (hex: string, alpha: number): string => {
+  const cleaned = hex.replace('#', '');
+  if (cleaned.length !== 6) return `rgba(120,120,120,${alpha})`;
+  const r = parseInt(cleaned.substring(0, 2), 16);
+  const g = parseInt(cleaned.substring(2, 4), 16);
+  const b = parseInt(cleaned.substring(4, 6), 16);
+  return `rgba(${r},${g},${b},${alpha})`;
+};
+
+const RARITY_HEX: Record<RarityName, string> = {
+  COMMON:  '#7C7891',
+  RARE:    '#6FA8D9',
+  EPIC:    '#B194FF',
+  SPECIAL: '#E8C56A',
+};
+
+const getRarityColor = (item: MyDummyItemDTO): string =>
+  item.colorCode || RARITY_HEX[item.name] || '#7C7891';
+
+const formatDate = (iso: string) => {
+  const d = new Date(iso);
+  return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
+};
+
 // ── Layout ───────────────────────────────────────────────────
+
 const Page = styled.div`
   min-height: 100vh;
   width: 100%;
@@ -76,6 +102,7 @@ const PageTitle = styled.h1`
 `;
 
 // ── Search ───────────────────────────────────────────────────
+
 const SearchWrap = styled.div`
   position: relative;
   display: flex;
@@ -127,7 +154,7 @@ const SearchHint = styled.p`
 
 // ── Dummy Card ────────────────────────────────────────────────
 // DummyContent must be declared BEFORE DummyCard so styled-components
-// can generate the selector reference used in DummyCard's hover rule.
+// can resolve the selector reference used in DummyCard's hover rule.
 
 const DummyContent = styled.p`
   font-size: var(--dt-size-sm);
@@ -135,14 +162,14 @@ const DummyContent = styled.p`
   line-height: 1.6;
   margin: 0;
   overflow: hidden;
-  max-height: 3.2em; /* ~2 lines */
+  max-height: 3.2em;
   transition: max-height 0.5s var(--dt-ease-float);
 `;
 
 const DummyCard = styled.div<{ $color: string }>`
   background: linear-gradient(
     135deg,
-    ${({ $color }) => $color}18 0%,
+    ${({ $color }) => hexToRgba($color, 0.12)} 0%,
     var(--dt-bg-surface) 55%
   );
   border: 1px solid var(--dt-stroke-soft);
@@ -163,11 +190,11 @@ const DummyCard = styled.div<{ $color: string }>`
   &:hover {
     background: linear-gradient(
       135deg,
-      ${({ $color }) => $color}2A 0%,
+      ${({ $color }) => hexToRgba($color, 0.22)} 0%,
       var(--dt-bg-elevated) 55%
     );
-    border-color: ${({ $color }) => $color}66;
-    box-shadow: var(--dt-shadow-md), 0 0 22px ${({ $color }) => $color}44;
+    border-color: ${({ $color }) => hexToRgba($color, 0.4)};
+    box-shadow: var(--dt-shadow-md), 0 0 22px ${({ $color }) => hexToRgba($color, 0.3)};
     transform: translateY(-2px);
   }
 
@@ -188,8 +215,8 @@ const RarityBadge = styled.span<{ $color: string }>`
   font-weight: var(--dt-weight-bold);
   letter-spacing: var(--dt-tracking-wide);
   color: ${({ $color }) => $color};
-  background: ${({ $color }) => $color}1E;
-  border: 1px solid ${({ $color }) => $color}44;
+  background: ${({ $color }) => hexToRgba($color, 0.15)};
+  border: 1px solid ${({ $color }) => hexToRgba($color, 0.35)};
   border-radius: var(--dt-radius-pill);
   padding: 2px var(--dt-space-2);
   flex-shrink: 0;
@@ -214,6 +241,7 @@ const DummyDate = styled.span`
 `;
 
 // ── States ───────────────────────────────────────────────────
+
 const GlitchText = styled.p`
   font-family: var(--dt-font-mono);
   font-size: var(--dt-size-sm);
@@ -242,6 +270,7 @@ const EmptyText = styled.p`
   margin: 0;
   text-align: center;
   line-height: var(--dt-leading-relaxed);
+  white-space: pre-line;
 `;
 
 const LoadingMoreRow = styled.div`
@@ -277,25 +306,8 @@ const CountLabel = styled.p`
   text-align: right;
 `;
 
-// ── Helpers ──────────────────────────────────────────────────
-const PAGE_SIZE = 20;
-
-const RARITY_HEX: Record<RarityName, string> = {
-  COMMON:  '#7C7891',
-  RARE:    '#6FA8D9',
-  EPIC:    '#B194FF',
-  SPECIAL: '#E8C56A',
-};
-
-const getRarityColor = (item: MyDummyItemDTO): string =>
-  item.colorCode || RARITY_HEX[item.name] || '#7C7891';
-
-const formatDate = (iso: string) => {
-  const d = new Date(iso);
-  return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
-};
-
 // ── Component ────────────────────────────────────────────────
+
 const MyDummyPage: React.FC = () => {
   const [items, setItems] = useState<MyDummyItemDTO[]>([]);
   const [searchInput, setSearchInput] = useState('');
@@ -329,7 +341,7 @@ const MyDummyPage: React.FC = () => {
       const res = await api.get<APIResponse<MyDummyItemDTO[]>>(url);
       const data = res.data.result ?? [];
       setItems(prev => append ? [...prev, ...data] : data);
-      setHasMore(data.length === PAGE_SIZE);
+      setHasMore(data.length > 0);
       setCurrentPage(page);
     } catch (err) {
       if (isAxiosError(err)) {
@@ -343,7 +355,6 @@ const MyDummyPage: React.FC = () => {
     }
   }, [showToast]);
 
-  // 마운트: 로그인 확인 + 초기 목록 로드
   useEffect(() => {
     if (!isLoggedIn()) {
       showToast('로그인이 필요합니다.', 'error');
@@ -353,7 +364,7 @@ const MyDummyPage: React.FC = () => {
     fetchItems('', 0, false);
   }, [fetchItems, navigate, showToast]);
 
-  // 0.5s 디바운스 검색 (마운트 시 중복 호출 방지)
+  // 0.3s debounce search — skip first mount to avoid double-fetch
   useEffect(() => {
     if (isFirstMountRef.current) {
       isFirstMountRef.current = false;
@@ -363,11 +374,11 @@ const MyDummyPage: React.FC = () => {
       const kw = searchInput.trim();
       setActiveKeyword(kw);
       fetchItems(kw, 0, false);
-    }, 500);
+    }, 300);
     return () => clearTimeout(timer);
   }, [searchInput, fetchItems]);
 
-  // 무한 스크롤: sentinel이 뷰포트에 진입하면 다음 페이지 로드
+  // Infinite scroll via IntersectionObserver
   useEffect(() => {
     if (!sentinelRef.current || !hasMore || isLoadingMore || isLoading) return;
 
@@ -377,7 +388,7 @@ const MyDummyPage: React.FC = () => {
           fetchItems(activeKeyword, currentPage + 1, true);
         }
       },
-      { threshold: 0, rootMargin: '120px' }
+      { threshold: 0, rootMargin: '0px 0px 200px 0px' }
     );
     observer.observe(sentinelRef.current);
     return () => observer.disconnect();
@@ -428,7 +439,6 @@ const MyDummyPage: React.FC = () => {
           );
         })}
 
-        {/* 무한 스크롤 sentinel */}
         {hasMore && <Sentinel ref={sentinelRef} />}
 
         {isLoadingMore && (
