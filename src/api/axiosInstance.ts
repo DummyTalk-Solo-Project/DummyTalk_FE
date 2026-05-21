@@ -50,16 +50,9 @@ api.interceptors.response.use(
   (error) => {
     const code = error.response?.data?.code as string | undefined;
 
-    // RT 없음/만료 → 강제 로그아웃
-    if (code === 'SERVER_4104' || code === 'SERVER_4103') {
-      removeAccessToken();
-      if (!window.location.pathname.startsWith('/login')) {
-        window.location.href = '/login';
-      }
-    }
-
-    // AT 없음 → 로그인 페이지로
-    if (code === 'SERVER_4100') {
+    // 인증 실패 코드 수신 시 강제 로그아웃 처리
+    const forceLogoutCodes = ['SERVER_4100', 'SERVER_4103', 'SERVER_4104'];
+    if (code && forceLogoutCodes.includes(code)) {
       removeAccessToken();
       if (!window.location.pathname.startsWith('/login')) {
         window.location.href = '/login';

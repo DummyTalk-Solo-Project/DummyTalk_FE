@@ -16,9 +16,13 @@
 
 # 로컬 환경 설정 파일 (API Key 등 민감 정보 포함 가능)
 # .env 파일은 Git에 올리지 않고, 환경 변수로 관리해야 합니다.
+# 단, 아래 두 파일은 예외적으로 커밋 허용합니다.
+#   .env.example    : 변수 목록 템플릿 (실제 값 없음)
+#   .env.production : 공개 도메인 URL만 포함 (비밀값 없음)
 .env
 .env.*
-!.env.example # 템플릿 파일은 포함하여, 어떤 변수가 필요한지 알려줄 수 있음
+!.env.example
+!.env.production
 
 # npm/yarn/pnpm 캐시 파일
 npm-debug.log*
