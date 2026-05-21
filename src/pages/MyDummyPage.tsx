@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import styled, { keyframes } from 'styled-components';
 import { isAxiosError } from 'axios';
 import api from '../api/axiosInstance';
-import type { APIResponse, MyDummyItemDTO, RarityName } from '../types/api';
+import type { APIResponse, MyDummyItemDTO } from '../types/api';
 import { useToast } from '../components/Toast';
 import Header from '../components/Header';
 import { isLoggedIn } from '../utils/auth';
@@ -28,22 +28,35 @@ const hexToRgba = (hex: string, alpha: number): string => {
   return `rgba(${r},${g},${b},${alpha})`;
 };
 
-const RARITY_HEX: Record<RarityName, string> = {
-  COMMON:  '#7C7891',
-  RARE:    '#6FA8D9',
-  EPIC:    '#B194FF',
-  SPECIAL: '#E8C56A',
-};
-
-const getRarityColor = (item: MyDummyItemDTO): string =>
-  item.colorCode || RARITY_HEX[item.name] || '#7C7891';
-
-// Per-rarity tint intensity — COMMON is subtle (low tier), EPIC is prominent
-const RARITY_TINT: Record<RarityName, { bg: number; hover: number; badgeBg: number; badgeBorder: number }> = {
+// Per-rarity tint intensity — color itself comes from the server (colorCode)
+const RARITY_TINT: Record<string, { bg: number; hover: number; badgeBg: number; badgeBorder: number }> = {
   COMMON:  { bg: 0.05, hover: 0.09, badgeBg: 0.08, badgeBorder: 0.20 },
   RARE:    { bg: 0.10, hover: 0.18, badgeBg: 0.12, badgeBorder: 0.28 },
   EPIC:    { bg: 0.22, hover: 0.36, badgeBg: 0.24, badgeBorder: 0.50 },
   SPECIAL: { bg: 0.14, hover: 0.24, badgeBg: 0.18, badgeBorder: 0.40 },
+};
+
+// Server provides colorCode — use it as the single source of truth for color.
+// Falls back to design-system defaults only when the server returns null/invalid hex.
+const RARITY_FALLBACK: Record<string, string> = {
+  COMMON:  '#F4F0E4',
+  RARE:    '#44A194',
+  EPIC:    '#DE99FF',
+  SPECIAL: '#EC8F8D',
+};
+
+const HEX_RE = /^#[0-9A-Fa-f]{6}$/;
+
+const getRarityColor = (item: MyDummyItemDTO): string => {
+  const code = item.colorCode?.trim();
+  if (code && HEX_RE.test(code)) return code;
+  const name = item.name?.toUpperCase();
+  return RARITY_FALLBACK[name] ?? '#7C7891';
+};
+
+const getTint = (name: string) => {
+  const key = name?.toUpperCase();
+  return RARITY_TINT[key] ?? RARITY_TINT.COMMON;
 };
 
 const formatDate = (iso: string) => {
@@ -435,7 +448,7 @@ const MyDummyPage: React.FC = () => {
 
         {items.map((item) => {
           const color = getRarityColor(item);
-          const tint = RARITY_TINT[item.name] ?? RARITY_TINT.COMMON;
+          const tint = getTint(item.name);
           return (
             <DummyCard
               key={item.dummyId}

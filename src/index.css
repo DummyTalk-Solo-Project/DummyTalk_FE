@@ -36,12 +36,12 @@
   --dt-danger:         #E07A8E;
   --dt-info:           var(--dt-lavender-300);
 
-  --dt-rarity-common:    #7C7891;
-  --dt-rarity-rare:      #6FA8D9;
-  --dt-rarity-epic:      #B194FF;
+  --dt-rarity-common:    #F4F0E4;
+  --dt-rarity-rare:      #44A194;
+  --dt-rarity-epic:      #DE99FF;
   --dt-rarity-legendary: #E8C56A;
   --dt-rarity-mythic:    #FF9BC9;
-  --dt-rarity-special:   var(--dt-rarity-legendary); /* BE API SPECIAL → legendary */
+  --dt-rarity-special:   #EC8F8D;
 
   --dt-stroke-faint:   rgba(244, 241, 250, 0.06);
   --dt-stroke-soft:    rgba(244, 241, 250, 0.10);

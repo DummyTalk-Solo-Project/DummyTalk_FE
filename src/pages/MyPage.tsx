@@ -252,7 +252,7 @@ const ConfirmBtn = styled.button<{ $confirm?: boolean }>`
 const MyPage: React.FC = () => {
   const [userData, setUserData] = useState<MyPageDTO | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isSubscribeLoading, setIsSubscribeLoading] = useState(false);
+  // const [isSubscribeLoading, setIsSubscribeLoading] = useState(false); // 구독 기능 비활성화 중
   const [isWithdrawLoading, setIsWithdrawLoading] = useState(false);
   const [showWithdrawConfirm, setShowWithdrawConfirm] = useState(false);
   const navigate = useNavigate();
@@ -287,26 +287,27 @@ const MyPage: React.FC = () => {
     }
   }, [navigate]);
 
-  const handleSubscribe = async () => {
-    setIsSubscribeLoading(true);
-    try {
-      const res = await api.post<APIResponse<boolean>>('/api/members/subscribe');
-      const resData = res.data;
-      const isSuccess = resData.isSuccess || resData.code === 'MEMBER2008';
-      if (isSuccess) {
-        showToast(resData.message || '구독 요청에 성공했습니다.', 'success');
-        fetchMyPage();
-      } else {
-        showToast(resData.message || '구독 요청에 실패했습니다.', 'error');
-      }
-    } catch (err) {
-      if (isAxiosError(err)) {
-        showToast(err.response?.data?.message || '구독 요청에 실패했습니다.', 'error');
-      }
-    } finally {
-      setIsSubscribeLoading(false);
-    }
-  };
+  // 구독 기능 비활성화 중 — 재활성화 시 아래 주석 해제 + isSubscribeLoading state 주석 해제
+  // const handleSubscribe = async () => {
+  //   setIsSubscribeLoading(true);
+  //   try {
+  //     const res = await api.post<APIResponse<boolean>>('/api/members/subscribe');
+  //     const resData = res.data;
+  //     const isSuccess = resData.isSuccess || resData.code === 'MEMBER2008';
+  //     if (isSuccess) {
+  //       showToast(resData.message || '구독 요청에 성공했습니다.', 'success');
+  //       fetchMyPage();
+  //     } else {
+  //       showToast(resData.message || '구독 요청에 실패했습니다.', 'error');
+  //     }
+  //   } catch (err) {
+  //     if (isAxiosError(err)) {
+  //       showToast(err.response?.data?.message || '구독 요청에 실패했습니다.', 'error');
+  //     }
+  //   } finally {
+  //     setIsSubscribeLoading(false);
+  //   }
+  // };
 
   const handleWithdraw = async () => {
     setIsWithdrawLoading(true);
@@ -424,6 +425,7 @@ const MyPage: React.FC = () => {
               <ActionButton $variant="secondary" onClick={() => navigate('/my-dummy')}>
                 📚 내 잡지식 보관함 보기
               </ActionButton>
+              {/* 구독 신청 — 서비스 준비 중, 재활성화 시 아래 주석 해제
               {!userData?.isSubscribe && (
                 <ActionButton
                   $variant="accent"
@@ -433,6 +435,7 @@ const MyPage: React.FC = () => {
                   {isSubscribeLoading ? '처리 중...' : '✦ 구독 신청하기'}
                 </ActionButton>
               )}
+              */}
               {!showWithdrawConfirm ? (
                 <ActionButton $variant="danger" onClick={() => setShowWithdrawConfirm(true)}>
                   회원 탈퇴

@@ -68,11 +68,38 @@ const GreetingTitle = styled.h1`
 `;
 
 // ── Knowledge Card ───────────────────────────────────────────
+
+const hexToRgba = (hex: string, alpha: number): string => {
+  const cleaned = hex.replace('#', '');
+  if (cleaned.length !== 6) return `rgba(120,120,120,${alpha})`;
+  const r = parseInt(cleaned.substring(0, 2), 16);
+  const g = parseInt(cleaned.substring(2, 4), 16);
+  const b = parseInt(cleaned.substring(4, 6), 16);
+  return `rgba(${r},${g},${b},${alpha})`;
+};
+
+// CSS variable refs — used for text color only (valid as color values)
 const RARITY_COLORS: Record<string, string> = {
   COMMON:  'var(--dt-rarity-common)',
   RARE:    'var(--dt-rarity-rare)',
   EPIC:    'var(--dt-rarity-epic)',
   SPECIAL: 'var(--dt-rarity-special)',
+};
+
+// Hex values — used for rgba() tint calculations
+const RARITY_HEX: Record<string, string> = {
+  COMMON:  '#F4F0E4',
+  RARE:    '#44A194',
+  EPIC:    '#DE99FF',
+  SPECIAL: '#EC8F8D',
+};
+
+// Per-rarity tint intensity for KnowledgeCard
+const RARITY_CARD_TINT: Record<string, { bg: number; border: number; glow: number }> = {
+  COMMON:  { bg: 0.05, border: 0.22, glow: 0.12 },
+  RARE:    { bg: 0.10, border: 0.32, glow: 0.22 },
+  EPIC:    { bg: 0.18, border: 0.48, glow: 0.38 },
+  SPECIAL: { bg: 0.12, border: 0.38, glow: 0.28 },
 };
 
 const RARITY_LABELS: Record<string, string> = {
@@ -82,28 +109,37 @@ const RARITY_LABELS: Record<string, string> = {
   SPECIAL: 'SPECIAL',
 };
 
-const KnowledgeCard = styled.div<{ $rarity?: RarityName; $loading?: boolean }>`
+const KnowledgeCard = styled.div<{
+  $rarity?: RarityName;
+  $loading?: boolean;
+  $hexColor?: string;
+  $bgAlpha?: number;
+  $borderAlpha?: number;
+  $glowAlpha?: number;
+}>`
   width: 100%;
-  background: var(--dt-bg-surface);
-  border: 1px solid ${({ $rarity }) =>
-    $rarity ? 'transparent' : 'var(--dt-stroke-soft)'};
+  background: ${({ $hexColor, $bgAlpha }) =>
+    $hexColor
+      ? `linear-gradient(135deg, ${hexToRgba($hexColor, $bgAlpha ?? 0.10)} 0%, var(--dt-bg-surface) 55%)`
+      : 'var(--dt-bg-surface)'};
+  border: 1px solid ${({ $hexColor, $borderAlpha }) =>
+    $hexColor
+      ? hexToRgba($hexColor, $borderAlpha ?? 0.30)
+      : 'var(--dt-stroke-soft)'};
   border-radius: var(--dt-radius-xl);
   padding: var(--dt-space-8);
-  box-shadow: ${({ $loading }) =>
-    $loading ? 'none' : 'var(--dt-shadow-md), var(--dt-inset-highlight)'};
+  box-shadow: ${({ $loading, $hexColor, $glowAlpha }) =>
+    $loading
+      ? 'none'
+      : $hexColor
+        ? `var(--dt-shadow-md), 0 0 32px ${hexToRgba($hexColor, $glowAlpha ?? 0.22)}, var(--dt-inset-highlight)`
+        : 'var(--dt-shadow-md), var(--dt-inset-highlight)'};
   display: flex;
   flex-direction: column;
   gap: var(--dt-space-4);
   box-sizing: border-box;
   position: relative;
   overflow: hidden;
-
-  ${({ $rarity }) =>
-    $rarity &&
-    css`
-      outline: 1px solid ${RARITY_COLORS[$rarity]};
-      box-shadow: 0 0 32px ${RARITY_COLORS[$rarity]}22, var(--dt-shadow-md);
-    `}
 
   ${({ $loading }) =>
     $loading &&
@@ -201,8 +237,8 @@ const PityBanner = styled.div<{ $rarity: RarityName }>`
   width: 100%;
   padding: var(--dt-space-3) var(--dt-space-4);
   border-radius: var(--dt-radius-md);
-  background: ${({ $rarity }) => `${RARITY_COLORS[$rarity]}18`};
-  border: 1px solid ${({ $rarity }) => `${RARITY_COLORS[$rarity]}55`};
+  background: ${({ $rarity }) => hexToRgba(RARITY_HEX[$rarity] ?? '#7C7891', 0.12)};
+  border: 1px solid ${({ $rarity }) => hexToRgba(RARITY_HEX[$rarity] ?? '#7C7891', 0.40)};
   color: ${({ $rarity }) => RARITY_COLORS[$rarity]};
   font-family: var(--dt-font-mono);
   font-size: var(--dt-size-sm);
@@ -242,8 +278,8 @@ const PityTriggeredBadge = styled.span<{ $rarity: RarityName }>`
   gap: var(--dt-space-1);
   padding: 2px var(--dt-space-2);
   border-radius: var(--dt-radius-pill);
-  background: ${({ $rarity }) => `${RARITY_COLORS[$rarity]}25`};
-  border: 1px solid ${({ $rarity }) => `${RARITY_COLORS[$rarity]}60`};
+  background: ${({ $rarity }) => hexToRgba(RARITY_HEX[$rarity] ?? '#7C7891', 0.15)};
+  border: 1px solid ${({ $rarity }) => hexToRgba(RARITY_HEX[$rarity] ?? '#7C7891', 0.45)};
   color: ${({ $rarity }) => RARITY_COLORS[$rarity]};
   font-family: var(--dt-font-mono);
   font-size: var(--dt-size-xs);
@@ -337,10 +373,17 @@ const MainPage: React.FC = () => {
       );
     }
     if (dummy) {
-      const rarity = dummy.rarityName || 'COMMON';
-      const nextRarity = NEXT_RARITY[rarity as RarityName];
+      const rarity = (dummy.rarityName || 'COMMON').toUpperCase() as RarityName;
+      const nextRarity = NEXT_RARITY[rarity];
+      const tint = RARITY_CARD_TINT[rarity] ?? RARITY_CARD_TINT.COMMON;
       return (
-        <KnowledgeCard $rarity={rarity as RarityName}>
+        <KnowledgeCard
+          $rarity={rarity}
+          $hexColor={RARITY_HEX[rarity] ?? RARITY_HEX.COMMON}
+          $bgAlpha={tint.bg}
+          $borderAlpha={tint.border}
+          $glowAlpha={tint.glow}
+        >
           <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--dt-space-2)', flexWrap: 'wrap' }}>
             <RarityBadge $rarity={rarity as RarityName}>
               ◈ {RARITY_LABELS[rarity] || rarity}
