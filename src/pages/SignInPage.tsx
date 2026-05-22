@@ -374,7 +374,7 @@ const SignInPage: React.FC = () => {
             <InputWrapper>
               <Input
                 type="text"
-                placeholder="인증 코드 6자리"
+                placeholder="인증 코드 4자리"
                 value={verificationCode}
                 onChange={(e) => setVerificationCode(e.target.value)}
                 disabled={isEmailSending}
