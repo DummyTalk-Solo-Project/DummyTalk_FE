@@ -6,7 +6,7 @@ import api from '../api/axiosInstance';
 import type { APIResponse, MyDummyItemDTO } from '../types/api';
 import { useToast } from '../components/Toast';
 import Header from '../components/Header';
-import { isLoggedIn } from '../utils/auth';
+import { isLoggedIn, isAdmin } from '../utils/auth';
 
 const fadeRise = keyframes`
   from { opacity: 0; transform: translateY(12px); }
@@ -377,6 +377,10 @@ const MyDummyPage: React.FC = () => {
   }, [showToast]);
 
   useEffect(() => {
+    if (isAdmin()) {
+      navigate('/admin', { replace: true });
+      return;
+    }
     if (!isLoggedIn()) {
       showToast('로그인이 필요합니다.', 'error');
       navigate('/login');

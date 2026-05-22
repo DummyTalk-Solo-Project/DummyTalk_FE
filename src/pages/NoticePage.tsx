@@ -5,7 +5,7 @@ import { isAxiosError } from 'axios';
 import api from '../api/axiosInstance';
 import type { APIResponse, NoticeListItemDTO } from '../types/api';
 import Header from '../components/Header';
-import { isLoggedIn } from '../utils/auth';
+import { isLoggedIn, isAdmin } from '../utils/auth';
 
 const fadeRise = keyframes`
   from { opacity: 0; transform: translateY(12px); }
@@ -235,8 +235,12 @@ const NoticePage: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    if (isAdmin()) {
+      navigate('/admin', { replace: true });
+      return;
+    }
     fetchNotices(0, false);
-  }, [fetchNotices]);
+  }, [fetchNotices, navigate]);
 
   const handleLoadMore = () => {
     fetchNotices(currentPage + 1, true);

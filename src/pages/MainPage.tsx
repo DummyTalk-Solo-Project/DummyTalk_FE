@@ -5,7 +5,7 @@ import { isAxiosError } from 'axios';
 import type { AxiosResponse } from 'axios';
 import api from '../api/axiosInstance';
 import type { APIResponse, DummyResponseDTO, RarityName } from '../types/api';
-import { isLoggedIn, getUsername } from '../utils/auth';
+import { isLoggedIn, getUsername, isAdmin } from '../utils/auth';
 import { useToast } from '../components/Toast';
 import Header from '../components/Header';
 import TypingText from '../components/TypingText';
@@ -309,6 +309,10 @@ const MainPage: React.FC = () => {
 
   const navigate = useNavigate();
   const { showToast } = useToast();
+
+  useEffect(() => {
+    if (isAdmin()) navigate('/admin', { replace: true });
+  }, [navigate]);
 
   // 글리치 텍스트 사이클링 (로딩 중에만)
   useEffect(() => {

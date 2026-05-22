@@ -2,11 +2,12 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import api from '../api/axiosInstance';
-import { removeAccessToken } from '../utils/auth';
+import { removeAccessToken, isAdmin as checkIsAdmin } from '../utils/auth';
 
 interface HeaderProps {
   isLoggedIn: boolean;
   onLogout: () => void;
+  isAdmin?: boolean;
 }
 
 const Nav = styled.header`
@@ -77,7 +78,7 @@ const NavButton = styled.button`
   }
 `;
 
-const Header: React.FC<HeaderProps> = ({ isLoggedIn, onLogout }) => {
+const Header: React.FC<HeaderProps> = ({ isLoggedIn, onLogout, isAdmin = false }) => {
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -93,19 +94,25 @@ const Header: React.FC<HeaderProps> = ({ isLoggedIn, onLogout }) => {
 
   return (
     <Nav>
-      <Brand to="/">◈ DUMMYTALK</Brand>
+      <Brand to={checkIsAdmin() ? '/admin' : '/'}>◈ DUMMYTALK</Brand>
       <NavLinks>
-        <NavLink to="/notices">공지사항</NavLink>
-        {isLoggedIn ? (
-          <>
-            <NavLink to="/my-dummy">내 더미들</NavLink>
-            <NavLink to="/my-page">마이페이지</NavLink>
-            <NavButton onClick={handleLogout}>로그아웃</NavButton>
-          </>
+        {isAdmin ? (
+          <NavButton onClick={handleLogout}>로그아웃</NavButton>
         ) : (
           <>
-            <NavLink to="/login">로그인</NavLink>
-            <NavLink to="/sign-in">회원가입</NavLink>
+            <NavLink to="/notices">공지사항</NavLink>
+            {isLoggedIn ? (
+              <>
+                <NavLink to="/my-dummy">내 더미들</NavLink>
+                <NavLink to="/my-page">마이페이지</NavLink>
+                <NavButton onClick={handleLogout}>로그아웃</NavButton>
+              </>
+            ) : (
+              <>
+                <NavLink to="/login">로그인</NavLink>
+                <NavLink to="/sign-in">회원가입</NavLink>
+              </>
+            )}
           </>
         )}
       </NavLinks>

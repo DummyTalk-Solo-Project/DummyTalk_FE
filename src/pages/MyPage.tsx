@@ -7,7 +7,7 @@ import api from '../api/axiosInstance';
 import type { APIResponse, MyPageDTO } from '../types/api';
 import { useToast } from '../components/Toast';
 import Header from '../components/Header';
-import { isLoggedIn, removeAccessToken } from '../utils/auth';
+import { isLoggedIn, removeAccessToken, isAdmin } from '../utils/auth';
 
 const fadeRise = keyframes`
   from { opacity: 0; transform: translateY(12px); }
@@ -54,13 +54,14 @@ const BackButton = styled.button`
   display: flex;
   align-items: center;
   gap: var(--dt-space-2);
+  align-self: center;
+  margin-top: var(--dt-space-4);
   transition: all var(--dt-dur-base) var(--dt-ease-snap);
 
   &:hover {
     background: var(--dt-bg-surface);
     color: var(--dt-fg-primary);
     border-color: var(--dt-stroke-accent);
-    transform: translateX(-2px);
   }
 `;
 
@@ -334,6 +335,10 @@ const MyPage: React.FC = () => {
   };
 
   useEffect(() => {
+    if (isAdmin()) {
+      navigate('/admin', { replace: true });
+      return;
+    }
     if (!isLoggedIn()) {
       showToast('로그인이 필요합니다.', 'error');
       navigate('/login');
@@ -349,14 +354,12 @@ const MyPage: React.FC = () => {
         <Page>
           <Content>
           <SectionHeader>
-            <BackButton onClick={() => navigate('/')}>
-              ← 홈으로
-            </BackButton>
             <SectionTitle>마이페이지</SectionTitle>
           </SectionHeader>
             <InfoCard>
               <Label>불러오는 중...</Label>
             </InfoCard>
+            <BackButton onClick={() => navigate('/')}>← 홈으로</BackButton>
           </Content>
         </Page>
       </>
@@ -369,9 +372,6 @@ const MyPage: React.FC = () => {
       <Page>
         <Content>
           <SectionHeader>
-            <BackButton onClick={() => navigate('/')}>
-              ← 홈으로
-            </BackButton>
             <SectionTitle>마이페이지</SectionTitle>
           </SectionHeader>
           <InfoCard>
@@ -457,6 +457,7 @@ const MyPage: React.FC = () => {
               )}
             </ActionRow>
           </InfoCard>
+          <BackButton onClick={() => navigate('/')}>← 홈으로</BackButton>
         </Content>
       </Page>
     </>

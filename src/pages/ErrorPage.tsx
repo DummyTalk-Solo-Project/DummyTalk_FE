@@ -12,6 +12,7 @@ const PageContainer = styled.div`
   width: 100%;
   background: var(--dt-bg-base);
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   padding: var(--dt-space-6);
@@ -54,30 +55,30 @@ const ErrorCode = styled.p`
   letter-spacing: 0.1em;
 `;
 
-const ButtonGroup = styled.div`
-  display: flex;
-  gap: var(--dt-space-3);
-  justify-content: center;
-`;
-
-const Button = styled.button<{ $primary?: boolean }>`
+const RetryButton = styled.button`
   padding: var(--dt-space-3) var(--dt-space-6);
   border-radius: var(--dt-radius-md);
   font-weight: var(--dt-weight-medium);
   cursor: pointer;
   transition: all var(--dt-dur-base) var(--dt-ease-snap);
-  
-  ${({ $primary }) => $primary ? `
-    background: var(--dt-accent);
-    color: var(--dt-fg-on-accent);
-    border: none;
-    &:hover { box-shadow: var(--dt-glow-bloom); transform: translateY(-1px); }
-  ` : `
-    background: var(--dt-bg-elevated);
-    color: var(--dt-fg-primary);
-    border: 1px solid var(--dt-stroke-soft);
-    &:hover { border-color: var(--dt-stroke-accent); background: var(--dt-bg-surface); }
-  `}
+  background: var(--dt-accent);
+  color: var(--dt-fg-on-accent);
+  border: none;
+  &:hover { box-shadow: var(--dt-glow-bloom); transform: translateY(-1px); }
+`;
+
+const BackButton = styled.button`
+  padding: var(--dt-space-2) var(--dt-space-5);
+  border-radius: var(--dt-radius-md);
+  font-size: var(--dt-size-sm);
+  font-weight: var(--dt-weight-medium);
+  cursor: pointer;
+  transition: all var(--dt-dur-base) var(--dt-ease-snap);
+  background: var(--dt-bg-elevated);
+  color: var(--dt-fg-secondary);
+  border: 1px solid var(--dt-stroke-soft);
+  margin-top: var(--dt-space-8);
+  &:hover { border-color: var(--dt-stroke-accent); background: var(--dt-bg-surface); color: var(--dt-fg-primary); }
 `;
 
 const ErrorPage: React.FC = () => {
@@ -95,10 +96,8 @@ const ErrorPage: React.FC = () => {
         <Title>문제가 발생했습니다</Title>
         <Message>{errorMessage}</Message>
         <ErrorCode>CODE: {errorCode}</ErrorCode>
-        <ButtonGroup>
-          <Button onClick={() => navigate(-1)}>뒤로 가기</Button>
-          <Button $primary onClick={() => window.location.reload()}>다시 시도</Button>
-        </ButtonGroup>
+        <RetryButton onClick={() => window.location.reload()}>다시 시도</RetryButton>
+        <BackButton onClick={() => navigate(-1)}>← 뒤로 가기</BackButton>
       </Content>
     </PageContainer>
   );

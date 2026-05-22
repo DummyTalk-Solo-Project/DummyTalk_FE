@@ -13,7 +13,7 @@ import type {
 } from '../../types/api';
 import { useToast } from '../../components/Toast';
 import Header from '../../components/Header';
-import { isLoggedIn, isAdmin } from '../../utils/auth';
+import { isLoggedIn } from '../../utils/auth';
 
 // ── Animations ───────────────────────────────────────────────
 const fadeRise = keyframes`
@@ -139,21 +139,26 @@ const SubViewHeader = styled.div`
 `;
 
 const BackButton = styled.button`
-  background: none;
-  border: none;
-  color: var(--dt-fg-tertiary);
-  font-family: var(--dt-font-mono);
-  font-size: var(--dt-size-xs);
-  letter-spacing: var(--dt-tracking-wide);
+  background: var(--dt-bg-elevated);
+  border: 1px solid var(--dt-stroke-soft);
+  border-radius: var(--dt-radius-md);
+  padding: var(--dt-space-2) var(--dt-space-4);
+  color: var(--dt-fg-secondary);
+  font-family: var(--dt-font-sans);
+  font-size: var(--dt-size-sm);
+  font-weight: var(--dt-weight-medium);
   cursor: pointer;
-  padding: 0;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: var(--dt-space-2);
-  margin-bottom: var(--dt-space-3);
-  transition: color var(--dt-dur-base);
+  align-self: center;
+  margin-top: var(--dt-space-6);
+  transition: all var(--dt-dur-base) var(--dt-ease-snap);
 
-  &:hover { color: var(--dt-accent); }
+  &:hover {
+    color: var(--dt-fg-primary);
+    border-color: var(--dt-stroke-strong);
+  }
 `;
 
 // ── Common Card ──────────────────────────────────────────────
@@ -996,7 +1001,7 @@ const AdminPage: React.FC = () => {
 
   return (
     <>
-      <Header isLoggedIn={loggedIn} onLogout={() => navigate('/')} />
+      <Header isLoggedIn={loggedIn} onLogout={() => navigate('/')} isAdmin />
       <Page>
         <Content>
           {view === 'home' ? (
@@ -1019,13 +1024,11 @@ const AdminPage: React.FC = () => {
           ) : (
             <>
               <SubViewHeader>
-                <BackButton onClick={() => setView('home')}>
-                  ← 관리자 패널로
-                </BackButton>
                 <PageLabel>◈ ADMIN CONTROL</PageLabel>
                 <PageTitle style={{ margin: 0 }}>{VIEW_META[view].title}</PageTitle>
               </SubViewHeader>
               {renderView()}
+              <BackButton onClick={() => setView('home')}>← 관리자 패널로</BackButton>
             </>
           )}
         </Content>

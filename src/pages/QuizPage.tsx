@@ -6,6 +6,7 @@ import type { AxiosResponse } from 'axios';
 import api from '../api/axiosInstance';
 import type { APIResponse, QuizResponseDTO } from '../types/api';
 import { useToast } from '../components/Toast';
+import { isAdmin } from '../utils/auth';
 
 // ── Animations ───────────────────────────────────────────────
 const float = keyframes`
@@ -116,13 +117,13 @@ const HomeButton = styled.button`
   font-weight: var(--dt-weight-medium);
   cursor: pointer;
   transition: all var(--dt-dur-base) var(--dt-ease-snap);
-  align-self: flex-start;
+  align-self: center;
+  margin-top: var(--dt-space-4);
 
   &:hover {
     background: var(--dt-bg-surface);
     color: var(--dt-fg-primary);
     border-color: var(--dt-stroke-accent);
-    transform: translateX(-2px);
   }
 `;
 
@@ -350,17 +351,21 @@ const QuizPage: React.FC = () => {
   }, [selectedIndex, quizData, showToast, navigate]);
 
   useEffect(() => {
+    if (isAdmin()) {
+      navigate('/admin', { replace: true });
+      return;
+    }
     fetchQuiz();
-  }, [fetchQuiz]);
+  }, [fetchQuiz, navigate]);
 
   // ── Loading state ────────────────────────────────────────
   if (isLoading) {
     return (
       <PageContainer>
         <Content>
-          <HomeButton onClick={() => navigate('/')}>← 홈으로</HomeButton>
           <GhostEmoji>👻</GhostEmoji>
           <GlitchLabel>{glitchText}</GlitchLabel>
+          <HomeButton onClick={() => navigate('/')}>← 홈으로</HomeButton>
         </Content>
       </PageContainer>
     );
@@ -371,11 +376,11 @@ const QuizPage: React.FC = () => {
     return (
       <PageContainer>
         <Content>
-          <HomeButton onClick={() => navigate('/')}>← 홈으로</HomeButton>
           <GhostEmoji>😵</GhostEmoji>
           <StateTitle>신호가 끊겼어요</StateTitle>
           <StateSubtitle>{error}</StateSubtitle>
           <RetryButton onClick={fetchQuiz}>다시 시도</RetryButton>
+          <HomeButton onClick={() => navigate('/')}>← 홈으로</HomeButton>
         </Content>
       </PageContainer>
     );
@@ -386,12 +391,12 @@ const QuizPage: React.FC = () => {
     return (
       <PageContainer>
         <Content>
-          <HomeButton onClick={() => navigate('/')}>← 홈으로</HomeButton>
           <GhostEmoji>😴</GhostEmoji>
           <StateTitle>아직 퀴즈 신호가 없어요</StateTitle>
           <StateSubtitle>
             유령이 문제를 준비 중이에요.{'\n'}조금만 더 기다려 주세요.
           </StateSubtitle>
+          <HomeButton onClick={() => navigate('/')}>← 홈으로</HomeButton>
         </Content>
       </PageContainer>
     );
@@ -402,10 +407,10 @@ const QuizPage: React.FC = () => {
     return (
       <PageContainer>
         <Content>
-          <HomeButton onClick={() => navigate('/')}>← 홈으로</HomeButton>
           <GhostEmoji>🌀</GhostEmoji>
           <StateTitle>퀴즈 정보를 찾을 수 없어요</StateTitle>
           <StateSubtitle>잠시 후 다시 시도해 주세요.</StateSubtitle>
+          <HomeButton onClick={() => navigate('/')}>← 홈으로</HomeButton>
         </Content>
       </PageContainer>
     );
@@ -419,10 +424,10 @@ const QuizPage: React.FC = () => {
     return (
       <PageContainer>
         <Content>
-          <HomeButton onClick={() => navigate('/')}>← 홈으로</HomeButton>
           <GhostEmoji>⏳</GhostEmoji>
           <StateTitle>퀴즈 오픈 대기 중이에요</StateTitle>
           <StateSubtitle>곧 시작해요. 놓치지 마세요!</StateSubtitle>
+          <HomeButton onClick={() => navigate('/')}>← 홈으로</HomeButton>
         </Content>
       </PageContainer>
     );
@@ -433,10 +438,10 @@ const QuizPage: React.FC = () => {
     return (
       <PageContainer>
         <Content>
-          <HomeButton onClick={() => navigate('/')}>← 홈으로</HomeButton>
           <GhostEmoji>🏁</GhostEmoji>
           <StateTitle>퀴즈가 종료되었어요</StateTitle>
           <StateSubtitle>다음 퀴즈를 기대해 주세요.</StateSubtitle>
+          <HomeButton onClick={() => navigate('/')}>← 홈으로</HomeButton>
         </Content>
       </PageContainer>
     );
@@ -446,7 +451,6 @@ const QuizPage: React.FC = () => {
   return (
     <PageContainer>
       <Content>
-        <HomeButton onClick={() => navigate('/')}>← 홈으로</HomeButton>
         <QuizCard>
           <QuizLabel>◈ QUIZ TRANSMISSION</QuizLabel>
           <QuizTitle>{title || '질문이 없습니다.'}</QuizTitle>
@@ -469,6 +473,7 @@ const QuizPage: React.FC = () => {
             {isSubmitting ? '전송 중...' : '정답 전송'}
           </SubmitButton>
         </QuizCard>
+        <HomeButton onClick={() => navigate('/')}>← 홈으로</HomeButton>
       </Content>
     </PageContainer>
   );

@@ -5,7 +5,7 @@ import { isAxiosError } from 'axios';
 import api from '../api/axiosInstance';
 import type { APIResponse, NoticeDetailDTO } from '../types/api';
 import Header from '../components/Header';
-import { isLoggedIn } from '../utils/auth';
+import { isLoggedIn, isAdmin } from '../utils/auth';
 
 const fadeRise = keyframes`
   from { opacity: 0; transform: translateY(12px); }
@@ -32,12 +32,6 @@ const Content = styled.div`
   animation: ${fadeRise} var(--dt-dur-rise) var(--dt-ease-rise) both;
 `;
 
-const SectionHeader = styled.div`
-  display: flex;
-  align-items: center;
-  gap: var(--dt-space-4);
-`;
-
 const BackButton = styled.button`
   background: var(--dt-bg-elevated);
   border: 1px solid var(--dt-stroke-soft);
@@ -50,14 +44,14 @@ const BackButton = styled.button`
   display: flex;
   align-items: center;
   gap: var(--dt-space-2);
+  align-self: center;
+  margin-top: var(--dt-space-4);
   transition: all var(--dt-dur-base) var(--dt-ease-snap);
-  flex-shrink: 0;
 
   &:hover {
     background: var(--dt-bg-surface);
     color: var(--dt-fg-primary);
     border-color: var(--dt-stroke-accent);
-    transform: translateX(-2px);
   }
 `;
 
@@ -167,6 +161,10 @@ const NoticeDetailPage: React.FC = () => {
   const loggedIn = isLoggedIn();
 
   useEffect(() => {
+    if (isAdmin()) {
+      navigate('/admin', { replace: true });
+      return;
+    }
     if (!id) {
       navigate('/notices');
       return;
@@ -228,12 +226,8 @@ const NoticeDetailPage: React.FC = () => {
       <Header isLoggedIn={loggedIn} onLogout={() => navigate('/')} />
       <Page>
         <Content>
-          <SectionHeader>
-            <BackButton onClick={() => navigate('/notices')}>
-              ← 공지사항
-            </BackButton>
-          </SectionHeader>
           {renderContent()}
+          <BackButton onClick={() => navigate('/notices')}>← 공지사항</BackButton>
         </Content>
       </Page>
     </>
