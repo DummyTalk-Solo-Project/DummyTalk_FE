@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import styled, { keyframes } from 'styled-components';
 import { isAxiosError } from 'axios';
 import api from '../api/axiosInstance';
-import { setAuthData } from '../utils/auth';
+import { setAuthData, isAdmin } from '../utils/auth';
 import { useToast } from '../components/Toast';
 import type { APIResponse, LoginSuccessDTO } from '../types/api';
 
@@ -246,7 +246,7 @@ const LoginPage: React.FC = () => {
     if (result?.accessToken) {
       setAuthData(result.accessToken, result.memberName);
       showToast(data.message || '로그인에 성공했습니다.', 'success');
-      navigate('/', { replace: true });
+      navigate(isAdmin() ? '/admin' : '/', { replace: true });
     }
   };
 

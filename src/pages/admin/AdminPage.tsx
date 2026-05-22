@@ -13,7 +13,7 @@ import type {
 } from '../../types/api';
 import { useToast } from '../../components/Toast';
 import Header from '../../components/Header';
-import { isLoggedIn } from '../../utils/auth';
+import { isLoggedIn, isAdmin } from '../../utils/auth';
 
 // ── Animations ───────────────────────────────────────────────
 const fadeRise = keyframes`
@@ -58,30 +58,102 @@ const PageTitle = styled.h1`
   margin: 0 0 var(--dt-space-2);
 `;
 
-// ── Tabs ─────────────────────────────────────────────────────
-const TabRow = styled.div`
+// ── Home Menu ─────────────────────────────────────────────────
+const HomeCenter = styled.div`
   display: flex;
-  gap: var(--dt-space-2);
-  border-bottom: 1px solid var(--dt-stroke-faint);
-  flex-wrap: wrap;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--dt-space-10);
+  width: 100%;
 `;
 
-const Tab = styled.button<{ $active: boolean }>`
-  background: none;
-  border: none;
-  border-bottom: 2px solid ${({ $active }) => $active ? 'var(--dt-accent)' : 'transparent'};
-  padding: var(--dt-space-3) var(--dt-space-4);
-  margin-bottom: -1px;
-  color: ${({ $active }) => $active ? 'var(--dt-fg-primary)' : 'var(--dt-fg-tertiary)'};
-  font-family: var(--dt-font-sans);
+const HomeHeader = styled.div`
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: var(--dt-space-2);
+`;
+
+const HomeSubtitle = styled.p`
   font-size: var(--dt-size-sm);
-  font-weight: ${({ $active }) => $active ? 'var(--dt-weight-semibold)' : 'var(--dt-weight-regular)'};
+  color: var(--dt-fg-tertiary);
+  margin: 0;
+`;
+
+const MenuGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--dt-space-4);
+  width: 100%;
+  max-width: 480px;
+`;
+
+const MenuCard = styled.button`
+  background: var(--dt-bg-surface);
+  border: 1px solid var(--dt-stroke-soft);
+  border-radius: var(--dt-radius-xl);
+  padding: var(--dt-space-8) var(--dt-space-6);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--dt-space-4);
   cursor: pointer;
   transition: all var(--dt-dur-base) var(--dt-ease-snap);
+  box-shadow: var(--dt-shadow-sm);
 
   &:hover {
-    color: var(--dt-fg-primary);
+    border-color: var(--dt-stroke-accent);
+    box-shadow: var(--dt-glow-soft);
+    transform: translateY(-2px);
+    background: var(--dt-bg-elevated);
   }
+`;
+
+const MenuSymbol = styled.span`
+  font-family: var(--dt-font-mono);
+  font-size: var(--dt-size-2xl);
+  color: var(--dt-accent);
+  line-height: 1;
+`;
+
+const MenuLabel = styled.span`
+  font-size: var(--dt-size-sm);
+  font-weight: var(--dt-weight-semibold);
+  color: var(--dt-fg-primary);
+  letter-spacing: var(--dt-tracking-normal);
+`;
+
+const MenuDesc = styled.span`
+  font-family: var(--dt-font-mono);
+  font-size: var(--dt-size-xs);
+  color: var(--dt-fg-disabled);
+  letter-spacing: var(--dt-tracking-wide);
+  text-transform: uppercase;
+`;
+
+// ── Sub-view Header ───────────────────────────────────────────
+const SubViewHeader = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: var(--dt-space-1);
+`;
+
+const BackButton = styled.button`
+  background: none;
+  border: none;
+  color: var(--dt-fg-tertiary);
+  font-family: var(--dt-font-mono);
+  font-size: var(--dt-size-xs);
+  letter-spacing: var(--dt-tracking-wide);
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--dt-space-2);
+  margin-bottom: var(--dt-space-3);
+  transition: color var(--dt-dur-base);
+
+  &:hover { color: var(--dt-accent); }
 `;
 
 // ── Common Card ──────────────────────────────────────────────
@@ -94,14 +166,13 @@ const Card = styled.div`
 `;
 
 const CardTitle = styled.h3`
-  font-size: var(--dt-size-base);
-  font-weight: var(--dt-weight-semibold);
+  font-family: var(--dt-font-mono);
+  font-size: var(--dt-size-xs);
+  font-weight: var(--dt-weight-medium);
   color: var(--dt-fg-secondary);
   margin: 0 0 var(--dt-space-4);
   text-transform: uppercase;
   letter-spacing: var(--dt-tracking-wide);
-  font-family: var(--dt-font-mono);
-  font-size: var(--dt-size-xs);
 `;
 
 const Row = styled.div`
@@ -273,7 +344,6 @@ const NoticeRow = styled.div`
   gap: var(--dt-space-3);
   padding: var(--dt-space-4) 0;
   border-bottom: 1px solid var(--dt-stroke-faint);
-
   &:last-child { border-bottom: none; }
 `;
 
@@ -372,7 +442,7 @@ const formatDate = (iso: string) => {
 };
 
 // ══════════════════════════════════════════════════════════════
-// Dashboard Tab
+// Dashboard (정산 확인)
 // ══════════════════════════════════════════════════════════════
 const SettlementStatCards: React.FC<{ data: SettlementDTO }> = ({ data }) => (
   <StatGrid>
@@ -388,21 +458,18 @@ const SettlementStatCards: React.FC<{ data: SettlementDTO }> = ({ data }) => (
   </StatGrid>
 );
 
-const DashboardTab: React.FC = () => {
+const DashboardView: React.FC = () => {
   const { showToast } = useToast();
 
-  // Daily
   const [dailyDate, setDailyDate] = useState('');
   const [dailyData, setDailyData] = useState<SettlementDTO | null>(null);
   const [isDailyLoading, setIsDailyLoading] = useState(false);
 
-  // Range
   const [rangeFrom, setRangeFrom] = useState('');
   const [rangeTo, setRangeTo] = useState('');
   const [rangeData, setRangeData] = useState<SettlementDTO[]>([]);
   const [isRangeLoading, setIsRangeLoading] = useState(false);
 
-  // Latest N days
   const [latestDays, setLatestDays] = useState('7');
   const [latestData, setLatestData] = useState<SettlementDTO[]>([]);
   const [isLatestLoading, setIsLatestLoading] = useState(false);
@@ -457,15 +524,8 @@ const DashboardTab: React.FC = () => {
       <Table>
         <thead>
           <tr>
-            <Th>날짜</Th>
-            <Th>총 뽑기</Th>
-            <Th>신규</Th>
-            <Th>활성</Th>
-            <Th>구독</Th>
-            <Th>C</Th>
-            <Th>R</Th>
-            <Th>E</Th>
-            <Th>S</Th>
+            <Th>날짜</Th><Th>총 뽑기</Th><Th>신규</Th><Th>활성</Th><Th>구독</Th>
+            <Th>C</Th><Th>R</Th><Th>E</Th><Th>S</Th>
           </tr>
         </thead>
         <tbody>
@@ -489,7 +549,6 @@ const DashboardTab: React.FC = () => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--dt-space-5)' }}>
-      {/* Daily */}
       <Card>
         <CardTitle>정산 단건 조회</CardTitle>
         <Row>
@@ -501,15 +560,9 @@ const DashboardTab: React.FC = () => {
             {isDailyLoading ? '조회 중...' : '조회'}
           </PrimaryButton>
         </Row>
-        {dailyData && (
-          <>
-            <Divider />
-            <SettlementStatCards data={dailyData} />
-          </>
-        )}
+        {dailyData && (<><Divider /><SettlementStatCards data={dailyData} /></>)}
       </Card>
 
-      {/* Range */}
       <Card>
         <CardTitle>기간별 정산 조회</CardTitle>
         <Row>
@@ -525,15 +578,9 @@ const DashboardTab: React.FC = () => {
             {isRangeLoading ? '조회 중...' : '조회'}
           </PrimaryButton>
         </Row>
-        {rangeData.length > 0 && (
-          <>
-            <Divider />
-            {renderSettlementTable(rangeData)}
-          </>
-        )}
+        {rangeData.length > 0 && (<><Divider />{renderSettlementTable(rangeData)}</>)}
       </Card>
 
-      {/* Latest N */}
       <Card>
         <CardTitle>최근 N일 정산 조회</CardTitle>
         <Row>
@@ -551,21 +598,16 @@ const DashboardTab: React.FC = () => {
             {isLatestLoading ? '조회 중...' : '조회'}
           </PrimaryButton>
         </Row>
-        {latestData.length > 0 && (
-          <>
-            <Divider />
-            {renderSettlementTable(latestData)}
-          </>
-        )}
+        {latestData.length > 0 && (<><Divider />{renderSettlementTable(latestData)}</>)}
       </Card>
     </div>
   );
 };
 
 // ══════════════════════════════════════════════════════════════
-// Notice Tab
+// Notice (공지사항 관리)
 // ══════════════════════════════════════════════════════════════
-const NoticeTab: React.FC = () => {
+const NoticeView: React.FC = () => {
   const { showToast } = useToast();
 
   const [notices, setNotices] = useState<NoticeListItemDTO[]>([]);
@@ -588,17 +630,13 @@ const NoticeTab: React.FC = () => {
   const fetchNotices = useCallback(async (page: number, append: boolean) => {
     if (!append) setIsListLoading(true);
     try {
-      const res = await api.get<APIResponse<NoticeListItemDTO[]>>(
-        `/api/admin/notices?page=${page}`
-      );
+      const res = await api.get<APIResponse<NoticeListItemDTO[]>>(`/api/admin/notices?page=${page}`);
       const data = res.data.result ?? [];
       setNotices(prev => append ? [...prev, ...data] : data);
       setHasMore(data.length === PAGE_SIZE);
       setCurrentPage(page);
     } catch (err) {
-      if (isAxiosError(err)) {
-        showToast(err.response?.data?.message || '공지사항 로딩 실패', 'error');
-      }
+      if (isAxiosError(err)) showToast(err.response?.data?.message || '공지사항 로딩 실패', 'error');
     } finally {
       setIsListLoading(false);
     }
@@ -638,18 +676,10 @@ const NoticeTab: React.FC = () => {
     setIsFormLoading(true);
     try {
       if (editingId === null) {
-        await api.post('/api/admin/notices', {
-          title: formTitle,
-          content: formContent,
-          isPinned: formIsPinned,
-        });
+        await api.post('/api/admin/notices', { title: formTitle, content: formContent, isPinned: formIsPinned });
         showToast('공지사항이 작성되었습니다. (비공개 상태)', 'success');
       } else {
-        await api.patch(`/api/admin/notices/${editingId}`, {
-          title: formTitle,
-          content: formContent,
-          isPinned: formIsPinned,
-        });
+        await api.patch(`/api/admin/notices/${editingId}`, { title: formTitle, content: formContent, isPinned: formIsPinned });
         showToast('공지사항이 수정되었습니다.', 'success');
       }
       setShowForm(false);
@@ -691,7 +721,6 @@ const NoticeTab: React.FC = () => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--dt-space-5)' }}>
-      {/* Form */}
       {showForm && (
         <Card>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--dt-space-4)' }}>
@@ -703,26 +732,14 @@ const NoticeTab: React.FC = () => {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--dt-space-3)' }}>
             <FieldGroup>
               <Label>제목</Label>
-              <Input
-                placeholder="공지사항 제목"
-                value={formTitle}
-                onChange={e => setFormTitle(e.target.value)}
-              />
+              <Input placeholder="공지사항 제목" value={formTitle} onChange={e => setFormTitle(e.target.value)} />
             </FieldGroup>
             <FieldGroup>
               <Label>내용</Label>
-              <Textarea
-                placeholder="공지사항 내용을 입력하세요."
-                value={formContent}
-                onChange={e => setFormContent(e.target.value)}
-              />
+              <Textarea placeholder="공지사항 내용을 입력하세요." value={formContent} onChange={e => setFormContent(e.target.value)} />
             </FieldGroup>
             <CheckboxRow>
-              <input
-                type="checkbox"
-                checked={formIsPinned}
-                onChange={e => setFormIsPinned(e.target.checked)}
-              />
+              <input type="checkbox" checked={formIsPinned} onChange={e => setFormIsPinned(e.target.checked)} />
               상단 고정
             </CheckboxRow>
             <PrimaryButton onClick={handleSubmitForm} disabled={isFormLoading} style={{ alignSelf: 'flex-start' }}>
@@ -732,13 +749,10 @@ const NoticeTab: React.FC = () => {
         </Card>
       )}
 
-      {/* List */}
       <Card>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--dt-space-4)' }}>
           <CardTitle style={{ margin: 0 }}>공지사항 목록 (비공개 포함)</CardTitle>
-          {!showForm && (
-            <PrimaryButton onClick={openCreate}>+ 새 공지사항</PrimaryButton>
-          )}
+          {!showForm && <PrimaryButton onClick={openCreate}>+ 새 공지사항</PrimaryButton>}
         </div>
 
         {isListLoading ? (
@@ -770,10 +784,7 @@ const NoticeTab: React.FC = () => {
                   </>
                 ) : (
                   <>
-                    <SmallButton
-                      onClick={() => handleTogglePublish(notice.id)}
-                      disabled={togglingId === notice.id}
-                    >
+                    <SmallButton onClick={() => handleTogglePublish(notice.id)} disabled={togglingId === notice.id}>
                       {notice.isPublished ? '비공개' : '공개'}
                     </SmallButton>
                     <SmallButton onClick={() => openEdit(notice.id)}>수정</SmallButton>
@@ -787,9 +798,7 @@ const NoticeTab: React.FC = () => {
 
         {hasMore && (
           <div style={{ textAlign: 'center', marginTop: 'var(--dt-space-4)' }}>
-            <SecondaryButton onClick={() => fetchNotices(currentPage + 1, true)}>
-              더 보기
-            </SecondaryButton>
+            <SecondaryButton onClick={() => fetchNotices(currentPage + 1, true)}>더 보기</SecondaryButton>
           </div>
         )}
       </Card>
@@ -798,9 +807,9 @@ const NoticeTab: React.FC = () => {
 };
 
 // ══════════════════════════════════════════════════════════════
-// Quiz Tab
+// Quiz (퀴즈 관리)
 // ══════════════════════════════════════════════════════════════
-const QuizTab: React.FC = () => {
+const QuizView: React.FC = () => {
   const { showToast } = useToast();
 
   const [openTime, setOpenTime] = useState('');
@@ -848,12 +857,8 @@ const QuizTab: React.FC = () => {
         <CardTitle>퀴즈 오픈</CardTitle>
         <Row>
           <FieldGroup>
-            <Label>오픈 시각 (현재 시간 이후)</Label>
-            <Input
-              type="datetime-local"
-              value={openTime}
-              onChange={e => setOpenTime(e.target.value)}
-            />
+            <Label>오픈 시각 (현재 시간 이후 · 5분 뒤 자동 종료)</Label>
+            <Input type="datetime-local" value={openTime} onChange={e => setOpenTime(e.target.value)} />
           </FieldGroup>
           <PrimaryButton onClick={handleOpenQuiz} disabled={isOpening || !openTime}>
             {isOpening ? '오픈 중...' : '퀴즈 오픈'}
@@ -872,6 +877,23 @@ const QuizTab: React.FC = () => {
             <p style={{ margin: 'var(--dt-space-3) 0 0', fontSize: 'var(--dt-size-sm)', color: 'var(--dt-fg-secondary)' }}>
               {openResult.title}
             </p>
+            {openResult.answerList && (
+              <div style={{ marginTop: 'var(--dt-space-3)', display: 'flex', flexDirection: 'column', gap: 'var(--dt-space-2)' }}>
+                {openResult.answerList.map((ans, i) => (
+                  <p
+                    key={i}
+                    style={{
+                      margin: 0,
+                      fontSize: 'var(--dt-size-sm)',
+                      color: i + 1 === openResult.answer ? 'var(--dt-success)' : 'var(--dt-fg-tertiary)',
+                      fontFamily: 'var(--dt-font-mono)',
+                    }}
+                  >
+                    {i + 1 === openResult.answer ? '▶ ' : '  '}{i + 1}. {ans}
+                  </p>
+                ))}
+              </div>
+            )}
           </>
         )}
       </Card>
@@ -885,14 +907,8 @@ const QuizTab: React.FC = () => {
           <>
             <Divider />
             <StatGrid>
-              <StatCard>
-                <StatLabel>활성 스레드</StatLabel>
-                <StatValue>{schedulerStatus.activeCount}</StatValue>
-              </StatCard>
-              <StatCard>
-                <StatLabel>풀 크기</StatLabel>
-                <StatValue>{schedulerStatus.poolSize}</StatValue>
-              </StatCard>
+              <StatCard><StatLabel>활성 스레드</StatLabel><StatValue>{schedulerStatus.activeCount}</StatValue></StatCard>
+              <StatCard><StatLabel>풀 크기</StatLabel><StatValue>{schedulerStatus.poolSize}</StatValue></StatCard>
             </StatGrid>
           </>
         )}
@@ -902,9 +918,9 @@ const QuizTab: React.FC = () => {
 };
 
 // ══════════════════════════════════════════════════════════════
-// Member Tab
+// Member (회원 관리)
 // ══════════════════════════════════════════════════════════════
-const MemberTab: React.FC = () => {
+const MemberView: React.FC = () => {
   const { showToast } = useToast();
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -913,9 +929,7 @@ const MemberTab: React.FC = () => {
     if (!email.trim()) return;
     setIsLoading(true);
     try {
-      await api.patch('/api/admin/members/subscribe', null, {
-        params: { email }
-      });
+      await api.patch('/api/admin/members/subscribe', null, { params: { email } });
       showToast(`${email} 구독 승인 완료`, 'success');
       setEmail('');
     } catch (err) {
@@ -950,17 +964,17 @@ const MemberTab: React.FC = () => {
 // ══════════════════════════════════════════════════════════════
 // Main AdminPage
 // ══════════════════════════════════════════════════════════════
-type TabId = 'dashboard' | 'notices' | 'quiz' | 'members';
+type ViewId = 'home' | 'dashboard' | 'notices' | 'quiz' | 'members';
 
-const TABS: { id: TabId; label: string }[] = [
-  { id: 'dashboard', label: '대시보드' },
-  { id: 'notices',   label: '공지사항' },
-  { id: 'quiz',      label: '퀴즈' },
-  { id: 'members',   label: '회원 관리' },
-];
+const VIEW_META: Record<Exclude<ViewId, 'home'>, { symbol: string; label: string; desc: string; title: string }> = {
+  dashboard: { symbol: '∑', label: '정산 확인',    desc: 'SETTLEMENT',  title: '정산 대시보드' },
+  notices:   { symbol: '◈', label: '공지사항 관리', desc: 'NOTICE',      title: '공지사항 관리' },
+  quiz:      { symbol: '◇', label: '퀴즈 관리',    desc: 'QUIZ',        title: '퀴즈 관리' },
+  members:   { symbol: '○', label: '회원 관리',    desc: 'MEMBER',      title: '회원 관리' },
+};
 
 const AdminPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<TabId>('dashboard');
+  const [view, setView] = useState<ViewId>('home');
   const navigate = useNavigate();
   const loggedIn = isLoggedIn();
 
@@ -970,12 +984,13 @@ const AdminPage: React.FC = () => {
     }
   }, [loggedIn, navigate]);
 
-  const renderTab = () => {
-    switch (activeTab) {
-      case 'dashboard': return <DashboardTab />;
-      case 'notices':   return <NoticeTab />;
-      case 'quiz':      return <QuizTab />;
-      case 'members':   return <MemberTab />;
+  const renderView = () => {
+    switch (view) {
+      case 'dashboard': return <DashboardView />;
+      case 'notices':   return <NoticeView />;
+      case 'quiz':      return <QuizView />;
+      case 'members':   return <MemberView />;
+      default:          return null;
     }
   };
 
@@ -984,20 +999,35 @@ const AdminPage: React.FC = () => {
       <Header isLoggedIn={loggedIn} onLogout={() => navigate('/')} />
       <Page>
         <Content>
-          <PageLabel>◈ ADMIN CONTROL</PageLabel>
-          <PageTitle>관리자 패널</PageTitle>
-          <TabRow>
-            {TABS.map(t => (
-              <Tab
-                key={t.id}
-                $active={activeTab === t.id}
-                onClick={() => setActiveTab(t.id)}
-              >
-                {t.label}
-              </Tab>
-            ))}
-          </TabRow>
-          {renderTab()}
+          {view === 'home' ? (
+            <HomeCenter>
+              <HomeHeader>
+                <PageLabel>◈ ADMIN CONTROL</PageLabel>
+                <PageTitle>관리자 패널</PageTitle>
+                <HomeSubtitle>관리할 항목을 선택하세요</HomeSubtitle>
+              </HomeHeader>
+              <MenuGrid>
+                {(Object.entries(VIEW_META) as [Exclude<ViewId, 'home'>, typeof VIEW_META[Exclude<ViewId, 'home'>]][]).map(([id, meta]) => (
+                  <MenuCard key={id} onClick={() => setView(id)}>
+                    <MenuSymbol>{meta.symbol}</MenuSymbol>
+                    <MenuLabel>{meta.label}</MenuLabel>
+                    <MenuDesc>{meta.desc}</MenuDesc>
+                  </MenuCard>
+                ))}
+              </MenuGrid>
+            </HomeCenter>
+          ) : (
+            <>
+              <SubViewHeader>
+                <BackButton onClick={() => setView('home')}>
+                  ← 관리자 패널로
+                </BackButton>
+                <PageLabel>◈ ADMIN CONTROL</PageLabel>
+                <PageTitle style={{ margin: 0 }}>{VIEW_META[view].title}</PageTitle>
+              </SubViewHeader>
+              {renderView()}
+            </>
+          )}
         </Content>
       </Page>
     </>

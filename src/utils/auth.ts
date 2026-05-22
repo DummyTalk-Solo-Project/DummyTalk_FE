@@ -2,6 +2,16 @@
 export const TOKEN_KEY = 'accessToken';
 export const USERNAME_KEY = 'username'; // 메인 페이지에서 사용할 닉네임 키
 
+// JWT 페이로드 디코딩 (서명 검증 없이 클레임만 추출)
+const decodeJwtPayload = (token: string): Record<string, unknown> | null => {
+  try {
+    const raw = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+    return JSON.parse(atob(raw));
+  } catch {
+    return null;
+  }
+};
+
 // 1. 토큰 저장 (로그인 성공 시)
 export const setAuthData = (token: string, username : string) => {
   localStorage.setItem(TOKEN_KEY, token);
@@ -25,7 +35,16 @@ export const removeAccessToken = () => {
 
 // 4. 로그인 상태 확인 (토큰 존재 여부)
 export const isLoggedIn = (): boolean => {
-    // 토큰이 존재하고 만료되지 않았는지 추가 확인 로직이 필요하지만, 
-    // 현재는 존재 여부만으로 판단합니다.
-    return !!getAccessToken(); 
-}
+    return !!getAccessToken();
+};
+
+// 5. Admin 권한 확인 (JWT 클레임의 role 필드 기반)
+export const isAdmin = (): boolean => {
+  const token = getAccessToken();
+  if (!token) return false;
+  const payload = decodeJwtPayload(token);
+  if (!payload) return false;
+  const role = payload.role ?? payload.roles;
+  if (Array.isArray(role)) return role.some(r => r === 'ADMIN' || r === 'ROLE_ADMIN');
+  return role === 'ADMIN' || role === 'ROLE_ADMIN';
+};
